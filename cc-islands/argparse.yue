@@ -1,0 +1,150 @@
+
+export class Args
+  new: (@_name) =>
+    @_flags = {}
+    @_params = {}
+    @_add_help = true
+    @_auto_args_added = false
+
+  add_flag: (flag) => @_flags[] = flag
+  add_param: (param) => @_params[] = param
+  no_help: => @_add_help = false
+
+  parse: (args) =>
+    if not @_auto_args_added
+      @_add_auto_args!
+    @_auto_args_added = true
+
+    if err = @_validate!
+      return nil, err
+
+    ret = with {}
+      for flag in @_flags
+        [flag._name] = flag._arg_default
+      for param in @_params
+        [param._name] = param._arg_default
+
+    flag_map = with {}
+      for flag in @_flags
+        if flag._short
+          [flag._short] = flag
+        if flag._long
+          [flag._long] = flag
+
+    curr_param = 1
+    for i = 1, #args
+      arg = args[i]
+      if arg\sub 1, 1 == '-'
+        flag = flag_map[arg]
+        if not flag?
+          return nil, "unknown flag #{arg}"
+        ret[flag._name] = if not flag._takes_param
+          true
+        else
+          i += 1
+          flag_arg = arg[i]
+          if not flag_arg?
+            return nil, "flag #{arg} expected an argument"
+          flag_arg
+      else
+        param = @_params[curr_param]
+        if not curr_param
+          return nil, "unexpected parameter #{arg}"
+        ret[param._name] = arg
+        curr_param += 1
+
+    for flag in @_flags
+      if flag._required and not ret[flag._name]
+        return nil, "flag #{flag\_repr!} required"
+    for param in @_param
+      if param._required and not ret[param._name]
+        return nil, "flag #{param\_repr!} required"
+
+    if ret._help
+      @_print_help!
+
+    ret, nil
+
+  _add_auto_args: =>
+    if @_add_help
+      @add_flag with Flag 'help'
+        \dest '_help'
+
+  _validate: =>
+    flag_tags = with {}
+      for flag in @_flags
+        if [flag._short] or [flag._long]
+          return "duplicate flag: #{flag\_repr!}"
+        if flag._short
+          [flag._short] = true
+        if flag._long
+          [flag._long] = true
+
+    arg_names = { flag._name, true for flag in @_flags }
+    for param in @_params
+      name = param._name
+      if arg_names[name]?
+        return "duplicate parameter name: #{name}"
+      arg_names[name] = true
+    nil
+
+  _print_help: =>
+    print table.concat with {@_name, ' '}
+      first_arg = true
+      for flag in @_flags
+        if not first_arg
+          [] = ' '
+        first_flag = false
+
+        if not flag._required
+          [] = '['
+        [] = flag._repr!
+        if flag._takes_param
+          [] = ' '
+          [] = flag._value_name
+        if not flag._required
+          [] = ']'
+
+      for param in @_params
+        if not first_arg
+          [] = ' '
+        first_arg = false
+
+        if not flag._required
+          [] = '['
+        [] = param._repr!
+        if not flag._required
+          [] = ']'
+
+    os.exit 0
+
+export class Flag
+  new: (@_name) =>
+    @_takes_param = false
+    @_default = false
+    @_value_name = 'value'
+    @_short = @_name\sub 1, 1
+    @_long = '--' .. @_name\gsub ' ', '-'
+    @_required = false
+
+  dest: (@_name) =>
+  short: (@_short) =>
+  long: (@_long) =>
+  required: => @_required = true
+
+  takes_param: (@_default=nil) =>
+    @_takes_param = true
+
+  value_name: (@_value_name) =>
+
+  _repr: => @_short or @_long
+
+export class Param
+  new: (@_name) =>
+    @_arg_name = nil
+    @_required = false
+
+  arg_name: (@_arg_name) =>
+  required: => @_required = true
+
+  _repr: => @_arg_name or @_name

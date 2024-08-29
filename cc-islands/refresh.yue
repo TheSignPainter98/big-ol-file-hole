@@ -40,4 +40,4 @@ log = (message using quiet) ->
     return
   write message
 
-main { ... }
+main {...}
