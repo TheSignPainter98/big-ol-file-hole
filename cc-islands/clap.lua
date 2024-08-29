@@ -1,4 +1,6 @@
 local _module_0 = { }
+local Flag
+local Param
 local Args
 do
 	local _class_0
@@ -205,7 +207,6 @@ do
 	Args = _class_0
 end
 _module_0["Args"] = Args
-local Flag
 do
 	local _class_0
 	local _base_0 = {
@@ -262,7 +263,6 @@ do
 	Flag = _class_0
 end
 _module_0["Flag"] = Flag
-local Param
 do
 	local _class_0
 	local _base_0 = {

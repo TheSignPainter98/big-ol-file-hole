@@ -1,4 +1,6 @@
 local *
+local Flag -- `local *` does not cover exports
+local Param -- `local *` does not cover exports
 
 export class Args
   new: (@_name) =>
