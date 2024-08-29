@@ -1,3 +1,4 @@
+local *
 
 export class Args
   new: (@_name) =>
