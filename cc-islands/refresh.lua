@@ -18,15 +18,13 @@ main = function(args)
 		end)())
 		arg_parser = _with_0
 	end
-	args = arg_parser:parse(args)
-	for i = 1, #args do
-		local arg = args[i]
-		if '-q' == arg then
-			quiet = true
-		else
-			error("Unrecognised argument '" .. tostring(arg) .. "'")
-		end
+	local err
+	args, err = arg_parser:parse(args)
+	if (err ~= nil) then
+		error(err)
 	end
+	print("quiet: " .. tostring(args.quiet))
+	return print(args)
 end
 get_file = function(path)
 	local url = tostring(REPO) .. "/" .. tostring(path)

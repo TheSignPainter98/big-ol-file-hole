@@ -11,15 +11,11 @@ main = (args) ->
     \add_flag Flag 'quiet'
     \add_param with Param 'source'
       \default 'github.com/TheSignPainter98/big-ol-file-hole'
-  args = arg_parser\parse args
-
-  for i = 1, #args
-    arg = args[i]
-    switch arg
-      when '-q'
-        quiet = true
-      else
-        error "Unrecognised argument '#{arg}'"
+  args, err = arg_parser\parse args
+  if err?
+    error err
+  print "quiet: #{args.quiet}"
+  print args
 
 get_file = (path using nil) ->
   url = "#{REPO}/#{path}"
