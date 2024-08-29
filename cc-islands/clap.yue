@@ -93,7 +93,7 @@ export class Args
 
   _print_help: =>
     print table.concat with {@_name, ' '}
-      first_arg = true
+      first_flag = true
       for flag in *@_flags
         if not first_arg
           [] = ' '

@@ -162,14 +162,14 @@ do
 					self._name,
 					' '
 				}
-				local first_arg = true
+				local first_flag = true
 				local _list_0 = self._flags
 				for _index_0 = 1, #_list_0 do
 					local flag = _list_0[_index_0]
 					if not first_arg then
 						_with_0[#_with_0 + 1] = ' '
 					end
-					local first_flag = false
+					first_flag = false
 					if not flag._required then
 						_with_0[#_with_0 + 1] = '['
 					end
@@ -188,7 +188,7 @@ do
 					if not first_arg then
 						_with_0[#_with_0 + 1] = ' '
 					end
-					first_arg = false
+					local first_arg = false
 					if not flag._required then
 						_with_0[#_with_0 + 1] = '['
 					end
