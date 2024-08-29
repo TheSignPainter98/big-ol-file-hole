@@ -20,9 +20,9 @@ export class Args
 
     ret = with {}
       for flag in @_flags
-        [flag._name] = flag._arg_default
+        [flag._name] = flag._default
       for param in @_params
-        [param._name] = param._arg_default
+        [param._name] = param._default
 
     flag_map = with {}
       for flag in @_flags
@@ -142,9 +142,9 @@ export class Flag
 export class Param
   new: (@_name) =>
     @_arg_name = nil
-    @_required = false
+    @_required = true
 
   arg_name: (@_arg_name) =>
-  required: => @_required = true
+  default: (@_default) => @_required = false
 
   _repr: => @_arg_name or @_name

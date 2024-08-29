@@ -33,10 +33,10 @@ do
 			do
 				local _with_0 = { }
 				for flag in self._flags do
-					_with_0[flag._name] = flag._arg_default
+					_with_0[flag._name] = flag._default
 				end
 				for param in self._params do
-					_with_0[param._name] = param._arg_default
+					_with_0[param._name] = param._default
 				end
 				ret = _with_0
 			end
@@ -269,8 +269,9 @@ do
 		arg_name = function(self, _arg_name)
 			self._arg_name = _arg_name
 		end,
-		required = function(self)
-			self._required = true
+		default = function(self, _default)
+			self._default = _default
+			self._required = false
 		end,
 		_repr = function(self)
 			return self._arg_name or self._name
@@ -283,7 +284,7 @@ do
 		__init = function(self, _name)
 			self._name = _name
 			self._arg_name = nil
-			self._required = false
+			self._required = true
 		end,
 		__base = _base_0,
 		__name = "Param"

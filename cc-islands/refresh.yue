@@ -1,12 +1,17 @@
 local *
 
 import checkURL from http
+import Args, Flag, Param from 'argparse'
 
 REPO = 'TheSignPainter98/big-ol-file-hole'
 
 quiet = false
 
 main = (args) ->
+  arg_parser = with Args 'refresh'
+    \add_flag Flag 'quiet'
+    \add_param Param 'source'
+
   for i = 1, #args
     arg = args[i]
     switch arg
