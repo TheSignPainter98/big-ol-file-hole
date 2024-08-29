@@ -2,6 +2,8 @@ local *
 local Flag -- `local *` does not cover exports
 local Param -- `local *` does not cover exports
 
+EXIT = 'EXIT'
+
 export class Args
   new: (@_name) =>
     @_flags = {}
@@ -16,9 +18,11 @@ export class Args
   parse: (args) =>
     ret, err = @_parse args
     if err?
-      print err
+      if err != EXIT
+        print err
       print @_help_message!
-      os.exit 1
+      return false
+    ret, true
 
   _parse: (args) =>
     if not @_auto_args_added
@@ -72,7 +76,7 @@ export class Args
 
     if ret._help
       print @_help_message!
-      os.exit 0
+      return nil, EXIT
 
     ret, nil
 

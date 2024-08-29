@@ -1,6 +1,8 @@
 local _module_0 = { }
+local EXIT
 local Flag
 local Param
+EXIT = 'EXIT'
 local Args
 do
 	local _class_0
@@ -23,10 +25,13 @@ do
 		parse = function(self, args)
 			local ret, err = self:_parse(args)
 			if (err ~= nil) then
-				print(err)
+				if err ~= EXIT then
+					print(err)
+				end
 				print(self:_help_message())
-				return os.exit(1)
+				return false
 			end
+			return ret, true
 		end,
 		_parse = function(self, args)
 			if not self._auto_args_added then
@@ -112,7 +117,7 @@ do
 			end
 			if ret._help then
 				print(self:_help_message())
-				os.exit(0)
+				return nil, EXIT
 			end
 			return ret, nil
 		end,
