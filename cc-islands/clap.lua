@@ -173,7 +173,7 @@ do
 					if not flag._required then
 						_with_0[#_with_0 + 1] = '['
 					end
-					_with_0[#_with_0 + 1] = flag._repr()
+					_with_0[#_with_0 + 1] = flag:_repr()
 					if flag._takes_param then
 						_with_0[#_with_0 + 1] = ' '
 						_with_0[#_with_0 + 1] = flag._value_name
@@ -192,7 +192,7 @@ do
 					if not flag._required then
 						_with_0[#_with_0 + 1] = '['
 					end
-					_with_0[#_with_0 + 1] = param._repr()
+					_with_0[#_with_0 + 1] = param:_repr()
 					if not flag._required then
 						_with_0[#_with_0 + 1] = ']'
 					end

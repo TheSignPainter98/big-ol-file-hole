@@ -101,7 +101,7 @@ export class Args
 
         if not flag._required
           [] = '['
-        [] = flag._repr!
+        [] = flag\_repr!
         if flag._takes_param
           [] = ' '
           [] = flag._value_name
@@ -115,7 +115,7 @@ export class Args
 
         if not flag._required
           [] = '['
-        [] = param._repr!
+        [] = param\_repr!
         if not flag._required
           [] = ']'
 
