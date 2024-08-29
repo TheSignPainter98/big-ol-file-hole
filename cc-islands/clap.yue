@@ -121,10 +121,10 @@ export class Args
           [] = ' '
         first_arg = false
 
-        if not flag._required
+        if not param._required
           [] = '['
         [] = param\_repr!
-        if not flag._required
+        if not param._required
           [] = ']'
 
 export class Flag

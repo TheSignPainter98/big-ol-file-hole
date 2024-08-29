@@ -198,11 +198,11 @@ do
 						_with_0[#_with_0 + 1] = ' '
 					end
 					local first_arg = false
-					if not flag._required then
+					if not param._required then
 						_with_0[#_with_0 + 1] = '['
 					end
 					_with_0[#_with_0 + 1] = param:_repr()
-					if not flag._required then
+					if not param._required then
 						_with_0[#_with_0 + 1] = ']'
 					end
 				end
