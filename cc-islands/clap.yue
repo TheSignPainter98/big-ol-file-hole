@@ -62,7 +62,7 @@ export class Args
           flag_arg
       else
         param = @_params[curr_param]
-        if not curr_param
+        if not param
           return nil, "unexpected parameter #{arg}"
         ret[param._name] = arg
         curr_param += 1
@@ -105,11 +105,11 @@ export class Args
 
   _help_message: =>
     table.concat with {@_name, ' '}
-      first_flag = true
+      first_arg = true
       for flag in *@_flags
-        if not first_flag
+        if not first_arg
           [] = ' '
-        first_flag = false
+        first_arg = false
 
         if not flag._required
           [] = '['
@@ -121,7 +121,7 @@ export class Args
           [] = ']'
 
       for param in *@_params
-        if not first_flag
+        if not first_arg
           [] = ' '
         first_arg = false
 

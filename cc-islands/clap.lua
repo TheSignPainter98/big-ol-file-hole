@@ -94,7 +94,7 @@ do
 					end
 				else
 					local param = self._params[curr_param]
-					if not curr_param then
+					if not param then
 						return nil, "unexpected parameter " .. tostring(arg)
 					end
 					ret[param._name] = arg
@@ -176,14 +176,14 @@ do
 					self._name,
 					' '
 				}
-				local first_flag = true
+				local first_arg = true
 				local _list_0 = self._flags
 				for _index_0 = 1, #_list_0 do
 					local flag = _list_0[_index_0]
-					if not first_flag then
+					if not first_arg then
 						_with_0[#_with_0 + 1] = ' '
 					end
-					first_flag = false
+					first_arg = false
 					if not flag._required then
 						_with_0[#_with_0 + 1] = '['
 					end
@@ -199,10 +199,10 @@ do
 				local _list_1 = self._params
 				for _index_0 = 1, #_list_1 do
 					local param = _list_1[_index_0]
-					if not first_flag then
+					if not first_arg then
 						_with_0[#_with_0 + 1] = ' '
 					end
-					local first_arg = false
+					first_arg = false
 					if not param._required then
 						_with_0[#_with_0 + 1] = '['
 					end
