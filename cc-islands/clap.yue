@@ -123,7 +123,7 @@ export class Flag
     @_takes_param = false
     @_default = false
     @_value_name = 'value'
-    @_short = @_name\sub 1, 1
+    @_short = '-' .. @_name\sub 1, 1
     @_long = '--' .. @_name\gsub ' ', '-'
     @_required = false
 

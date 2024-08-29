@@ -244,7 +244,7 @@ do
 			self._takes_param = false
 			self._default = false
 			self._value_name = 'value'
-			self._short = self._name:sub(1, 1)
+			self._short = '-' .. self._name:sub(1, 1)
 			self._long = '--' .. self._name:gsub(' ', '-')
 			self._required = false
 		end,
