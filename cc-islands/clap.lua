@@ -34,10 +34,14 @@ do
 			local ret
 			do
 				local _with_0 = { }
-				for flag in self._flags do
+				local _list_0 = self._flags
+				for _index_0 = 1, #_list_0 do
+					local flag = _list_0[_index_0]
 					_with_0[flag._name] = flag._default
 				end
-				for param in self._params do
+				local _list_1 = self._params
+				for _index_0 = 1, #_list_1 do
+					local param = _list_1[_index_0]
 					_with_0[param._name] = param._default
 				end
 				ret = _with_0
@@ -45,7 +49,9 @@ do
 			local flag_map
 			do
 				local _with_0 = { }
-				for flag in self._flags do
+				local _list_0 = self._flags
+				for _index_0 = 1, #_list_0 do
+					local flag = _list_0[_index_0]
 					if flag._short then
 						_with_0[flag._short] = flag
 					end
@@ -82,12 +88,16 @@ do
 					curr_param = curr_param + 1
 				end
 			end
-			for flag in self._flags do
+			local _list_0 = self._flags
+			for _index_0 = 1, #_list_0 do
+				local flag = _list_0[_index_0]
 				if flag._required and not ret[flag._name] then
 					return nil, "flag " .. tostring(flag:_repr()) .. " required"
 				end
 			end
-			for param in self._param do
+			local _list_1 = self._param
+			for _index_0 = 1, #_list_1 do
+				local param = _list_1[_index_0]
 				if param._required and not ret[param._name] then
 					return nil, "flag " .. tostring(param:_repr()) .. " required"
 				end
@@ -110,7 +120,9 @@ do
 			local flag_tags
 			do
 				local _with_0 = { }
-				for flag in self._flags do
+				local _list_0 = self._flags
+				for _index_0 = 1, #_list_0 do
+					local flag = _list_0[_index_0]
 					if _with_0[flag._short] or _with_0[flag._long] then
 						return "duplicate flag: " .. tostring(flag:_repr())
 					end
@@ -126,12 +138,16 @@ do
 			local arg_names
 			do
 				local _tbl_0 = { }
-				for flag in self._flags do
+				local _list_0 = self._flags
+				for _index_0 = 1, #_list_0 do
+					local flag = _list_0[_index_0]
 					_tbl_0[flag._name] = true
 				end
 				arg_names = _tbl_0
 			end
-			for param in self._params do
+			local _list_0 = self._params
+			for _index_0 = 1, #_list_0 do
+				local param = _list_0[_index_0]
 				local name = param._name
 				if (arg_names[name] ~= nil) then
 					return "duplicate parameter name: " .. tostring(name)
@@ -147,7 +163,9 @@ do
 					' '
 				}
 				local first_arg = true
-				for flag in self._flags do
+				local _list_0 = self._flags
+				for _index_0 = 1, #_list_0 do
+					local flag = _list_0[_index_0]
 					if not first_arg then
 						_with_0[#_with_0 + 1] = ' '
 					end
@@ -164,7 +182,9 @@ do
 						_with_0[#_with_0 + 1] = ']'
 					end
 				end
-				for param in self._params do
+				local _list_1 = self._params
+				for _index_0 = 1, #_list_1 do
+					local param = _list_1[_index_0]
 					if not first_arg then
 						_with_0[#_with_0 + 1] = ' '
 					end

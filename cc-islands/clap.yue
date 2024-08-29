@@ -22,13 +22,13 @@ export class Args
       return nil, err
 
     ret = with {}
-      for flag in @_flags
+      for flag in *@_flags
         [flag._name] = flag._default
-      for param in @_params
+      for param in *@_params
         [param._name] = param._default
 
     flag_map = with {}
-      for flag in @_flags
+      for flag in *@_flags
         if flag._short
           [flag._short] = flag
         if flag._long
@@ -56,10 +56,10 @@ export class Args
         ret[param._name] = arg
         curr_param += 1
 
-    for flag in @_flags
+    for flag in *@_flags
       if flag._required and not ret[flag._name]
         return nil, "flag #{flag\_repr!} required"
-    for param in @_param
+    for param in *@_param
       if param._required and not ret[param._name]
         return nil, "flag #{param\_repr!} required"
 
@@ -75,7 +75,7 @@ export class Args
 
   _validate: =>
     flag_tags = with {}
-      for flag in @_flags
+      for flag in *@_flags
         if [flag._short] or [flag._long]
           return "duplicate flag: #{flag\_repr!}"
         if flag._short
@@ -83,8 +83,8 @@ export class Args
         if flag._long
           [flag._long] = true
 
-    arg_names = { flag._name, true for flag in @_flags }
-    for param in @_params
+    arg_names = { flag._name, true for flag in *@_flags }
+    for param in *@_params
       name = param._name
       if arg_names[name]?
         return "duplicate parameter name: #{name}"
@@ -94,7 +94,7 @@ export class Args
   _print_help: =>
     print table.concat with {@_name, ' '}
       first_arg = true
-      for flag in @_flags
+      for flag in *@_flags
         if not first_arg
           [] = ' '
         first_flag = false
@@ -108,7 +108,7 @@ export class Args
         if not flag._required
           [] = ']'
 
-      for param in @_params
+      for param in *@_params
         if not first_arg
           [] = ' '
         first_arg = false
