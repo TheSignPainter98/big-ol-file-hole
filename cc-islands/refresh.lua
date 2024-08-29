@@ -1,8 +1,7 @@
 local REPO, quiet, main, get_file, log
-local checkURL = http.checkURL
 local Args, Flag, Param
 do
-	local _obj_0 = 'argparse'
+	local _obj_0 = require('clap')
 	Args, Flag, Param = _obj_0.Args, _obj_0.Flag, _obj_0.Param
 end
 REPO = 'TheSignPainter98/big-ol-file-hole'

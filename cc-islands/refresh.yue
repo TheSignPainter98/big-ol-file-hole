@@ -1,7 +1,6 @@
 local *
 
-import checkURL from http
-import Args, Flag, Param from 'argparse'
+import Args, Flag, Param from require 'clap'
 
 REPO = 'TheSignPainter98/big-ol-file-hole'
 
