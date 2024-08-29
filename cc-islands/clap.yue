@@ -14,6 +14,13 @@ export class Args
   no_help: => @_add_help = false
 
   parse: (args) =>
+    ret, err = @_parse args
+    if err?
+      print err
+      print @_help_message!
+      os.exit 1
+
+  _parse: (args) =>
     if not @_auto_args_added
       @_add_auto_args!
     @_auto_args_added = true
@@ -64,7 +71,8 @@ export class Args
         return nil, "flag #{param\_repr!} required"
 
     if ret._help
-      @_print_help!
+      print @_help_message!
+      os.exit 0
 
     ret, nil
 
@@ -91,8 +99,8 @@ export class Args
       arg_names[name] = true
     nil
 
-  _print_help: =>
-    print table.concat with {@_name, ' '}
+  _help_message: =>
+    table.concat with {@_name, ' '}
       first_flag = true
       for flag in *@_flags
         if not first_flag
@@ -118,8 +126,6 @@ export class Args
         [] = param\_repr!
         if not flag._required
           [] = ']'
-
-    os.exit 0
 
 export class Flag
   new: (@_name) =>

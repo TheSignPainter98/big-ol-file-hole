@@ -18,11 +18,7 @@ main = function(args)
 		end)())
 		arg_parser = _with_0
 	end
-	local err
-	args, err = arg_parser:parse(args)
-	if (err ~= nil) then
-		error(err)
-	end
+	args = arg_parser:parse(args)
 	print("quiet: " .. tostring(args.quiet))
 	return print("source: " .. tostring(args.source))
 end

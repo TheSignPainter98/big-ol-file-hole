@@ -11,9 +11,7 @@ main = (args) ->
     \add_flag Flag 'quiet'
     \add_param with Param 'source'
       \default 'github.com/TheSignPainter98/big-ol-file-hole'
-  args, err = arg_parser\parse args
-  if err?
-    error err
+  args = arg_parser\parse args
   print "quiet: #{args.quiet}"
   print "source: #{args.source}"
 

@@ -21,6 +21,14 @@ do
 			self._add_help = false
 		end,
 		parse = function(self, args)
+			local ret, err = self:_parse(args)
+			if (err ~= nil) then
+				print(err)
+				print(self:_help_message())
+				return os.exit(1)
+			end
+		end,
+		_parse = function(self, args)
 			if not self._auto_args_added then
 				self:_add_auto_args()
 			end
@@ -103,7 +111,8 @@ do
 				end
 			end
 			if ret._help then
-				self:_print_help()
+				print(self:_help_message())
+				os.exit(0)
 			end
 			return ret, nil
 		end,
@@ -156,8 +165,8 @@ do
 			end
 			return nil
 		end,
-		_print_help = function(self)
-			print(table.concat((function()
+		_help_message = function(self)
+			return table.concat((function()
 				local _with_0 = {
 					self._name,
 					' '
@@ -198,8 +207,7 @@ do
 					end
 				end
 				return _with_0
-			end)()))
-			return os.exit(0)
+			end)())
 		end
 	}
 	if _base_0.__index == nil then
