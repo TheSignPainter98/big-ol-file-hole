@@ -12,7 +12,11 @@ main = function(args)
 	do
 		local _with_0 = Args('refresh')
 		_with_0:add_flag(Flag('quiet'))
-		_with_0:add_param(Param('source'))
+		_with_0:add_param((function()
+			local _with_1 = Param('source')
+			_with_1:default('github.com/TheSignPainter98/big-ol-file-hole')
+			return _with_1
+		end)())
 		arg_parser = _with_0
 	end
 	for i = 1, #args do
