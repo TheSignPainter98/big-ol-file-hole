@@ -176,10 +176,24 @@ do
 					self._name,
 					' '
 				}
+				local flags
+				do
+					local _accum_0 = { }
+					local _len_0 = 1
+					local _list_0 = self._flags
+					for _index_0 = 1, #_list_0 do
+						local flag = _list_0[_index_0]
+						_accum_0[_len_0] = flag
+						_len_0 = _len_0 + 1
+					end
+					flags = _accum_0
+				end
+				table.sort(flags, function(flag_1, flag_2)
+					return flag_1._name <= flag_2._name
+				end)
 				local first_arg = true
-				local _list_0 = self._flags
-				for _index_0 = 1, #_list_0 do
-					local flag = _list_0[_index_0]
+				for _index_0 = 1, #flags do
+					local flag = flags[_index_0]
 					if not first_arg then
 						_with_0[#_with_0 + 1] = ' '
 					end
@@ -196,9 +210,9 @@ do
 						_with_0[#_with_0 + 1] = ']'
 					end
 				end
-				local _list_1 = self._params
-				for _index_0 = 1, #_list_1 do
-					local param = _list_1[_index_0]
+				local _list_0 = self._params
+				for _index_0 = 1, #_list_0 do
+					local param = _list_0[_index_0]
 					if not first_arg then
 						_with_0[#_with_0 + 1] = ' '
 					end

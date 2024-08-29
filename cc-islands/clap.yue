@@ -105,8 +105,11 @@ export class Args
 
   _help_message: =>
     table.concat with {@_name, ' '}
+      flags = [ flag for flag in *@_flags ]
+      table.sort flags, (flag_1, flag_2) -> flag_1._name <= flag_2._name
+
       first_arg = true
-      for flag in *@_flags
+      for flag in *flags
         if not first_arg
           [] = ' '
         first_arg = false
