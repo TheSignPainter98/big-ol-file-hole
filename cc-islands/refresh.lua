@@ -24,7 +24,7 @@ main = function(args)
 		error(err)
 	end
 	print("quiet: " .. tostring(args.quiet))
-	return print(args)
+	return print("source: " .. tostring(args.source))
 end
 get_file = function(path)
 	local url = tostring(REPO) .. "/" .. tostring(path)

@@ -15,7 +15,7 @@ main = (args) ->
   if err?
     error err
   print "quiet: #{args.quiet}"
-  print args
+  print "source: #{args.source}"
 
 get_file = (path using nil) ->
   url = "#{REPO}/#{path}"
