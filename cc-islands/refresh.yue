@@ -12,6 +12,7 @@ main = (args) ->
     \add_flag Flag 'quiet'
     \add_param with Param 'source'
       \default 'github.com/TheSignPainter98/big-ol-file-hole'
+  args = arg_parser\parse args
 
   for i = 1, #args
     arg = args[i]

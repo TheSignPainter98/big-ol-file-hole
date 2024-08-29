@@ -19,6 +19,7 @@ main = function(args)
 		end)())
 		arg_parser = _with_0
 	end
+	args = arg_parser:parse(args)
 	for i = 1, #args do
 		local arg = args[i]
 		if '-q' == arg then
