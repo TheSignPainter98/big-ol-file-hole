@@ -1,0 +1,43 @@
+local *
+
+import checkURL from http
+
+REPO = 'TheSignPainter98/big-ol-file-hole'
+
+quiet = false
+
+main = (args) ->
+  for i = 1, #args
+    arg = args[i]
+    switch arg
+      when '-q'
+        quiet = true
+      else
+        error "Unrecognised argument '#{arg}'"
+
+get_file = (path using nil) ->
+  url = "#{REPO}/#{path}"
+  ok, err = http.checkUrl url
+  if not ok
+    return err
+
+  log "downloading #{url}..."
+
+  resp = http.get url
+  if not response?
+    return "failed"
+
+  log 'success'
+
+  content = resp.readAll!
+  resp.close!
+  if not content?
+    error "received content nil for some reason"
+  content
+
+log = (message using quiet) ->
+  if quiet
+    return
+  write message
+
+main { ... }
