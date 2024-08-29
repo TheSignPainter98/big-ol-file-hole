@@ -95,7 +95,7 @@ do
 					return nil, "flag " .. tostring(flag:_repr()) .. " required"
 				end
 			end
-			local _list_1 = self._param
+			local _list_1 = self._params
 			for _index_0 = 1, #_list_1 do
 				local param = _list_1[_index_0]
 				if param._required and not ret[param._name] then
@@ -166,7 +166,7 @@ do
 				local _list_0 = self._flags
 				for _index_0 = 1, #_list_0 do
 					local flag = _list_0[_index_0]
-					if not first_arg then
+					if not first_flag then
 						_with_0[#_with_0 + 1] = ' '
 					end
 					first_flag = false
@@ -185,7 +185,7 @@ do
 				local _list_1 = self._params
 				for _index_0 = 1, #_list_1 do
 					local param = _list_1[_index_0]
-					if not first_arg then
+					if not first_flag then
 						_with_0[#_with_0 + 1] = ' '
 					end
 					local first_arg = false

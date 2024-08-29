@@ -59,7 +59,7 @@ export class Args
     for flag in *@_flags
       if flag._required and not ret[flag._name]
         return nil, "flag #{flag\_repr!} required"
-    for param in *@_param
+    for param in *@_params
       if param._required and not ret[param._name]
         return nil, "flag #{param\_repr!} required"
 
@@ -95,7 +95,7 @@ export class Args
     print table.concat with {@_name, ' '}
       first_flag = true
       for flag in *@_flags
-        if not first_arg
+        if not first_flag
           [] = ' '
         first_flag = false
 
@@ -109,7 +109,7 @@ export class Args
           [] = ']'
 
       for param in *@_params
-        if not first_arg
+        if not first_flag
           [] = ' '
         first_arg = false
 
