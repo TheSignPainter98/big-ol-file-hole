@@ -1,10 +1,9 @@
-local REPO, quiet, main, get_file, log
+local quiet, main, get_file, log
 local Args, Flag, Param
 do
 	local _obj_0 = require('clap')
 	Args, Flag, Param = _obj_0.Args, _obj_0.Flag, _obj_0.Param
 end
-REPO = 'TheSignPainter98/big-ol-file-hole'
 quiet = false
 main = function(args)
 	local arg_parser
@@ -23,6 +22,7 @@ main = function(args)
 	if not ok then
 		return
 	end
+	quiet = args.quiet
 	print("quiet: " .. tostring(args.quiet))
 	return print("source: " .. tostring(args.source))
 end

@@ -2,7 +2,7 @@ local _module_0 = { }
 local EXIT
 local Flag
 local Param
-EXIT = 'EXIT'
+EXIT = { }
 local Args
 do
 	local _class_0
@@ -116,7 +116,6 @@ do
 				end
 			end
 			if ret._help then
-				print(self:_help_message())
 				return nil, EXIT
 			end
 			return ret, nil

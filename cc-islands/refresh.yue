@@ -2,8 +2,6 @@ local *
 
 import Args, Flag, Param from require 'clap'
 
-REPO = 'TheSignPainter98/big-ol-file-hole'
-
 quiet = false
 
 main = (args) ->
@@ -14,6 +12,8 @@ main = (args) ->
   args, ok = arg_parser\parse args
   if not ok
     return
+  quiet = args.quiet
+
   print "quiet: #{args.quiet}"
   print "source: #{args.source}"
 
