@@ -37,7 +37,7 @@ export class Args
     curr_param = 1
     for i = 1, #args
       arg = args[i]
-      if arg\sub 1, 1 == '-'
+      if '-' == arg\sub 1, 1
         flag = flag_map[arg]
         if not flag?
           return nil, "unknown flag #{arg}"

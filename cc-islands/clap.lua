@@ -64,7 +64,7 @@ do
 			local curr_param = 1
 			for i = 1, #args do
 				local arg = args[i]
-				if arg:sub(1, 1 == '-') then
+				if '-' == arg:sub(1, 1) then
 					local flag = flag_map[arg]
 					if not (flag ~= nil) then
 						return nil, "unknown flag " .. tostring(arg)
