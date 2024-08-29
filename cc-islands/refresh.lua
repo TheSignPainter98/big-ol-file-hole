@@ -18,7 +18,11 @@ main = function(args)
 		end)())
 		arg_parser = _with_0
 	end
-	args = arg_parser:parse(args)
+	local ok
+	args, ok = arg_parser:parse(args)
+	if not ok then
+		return
+	end
 	print("quiet: " .. tostring(args.quiet))
 	return print("source: " .. tostring(args.source))
 end

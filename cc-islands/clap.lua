@@ -29,7 +29,7 @@ do
 					print(err)
 				end
 				print(self:_help_message())
-				return false
+				return nil, false
 			end
 			return ret, true
 		end,

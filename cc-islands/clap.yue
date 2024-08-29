@@ -21,7 +21,7 @@ export class Args
       if err != EXIT
         print err
       print @_help_message!
-      return false
+      return nil, false
     ret, true
 
   _parse: (args) =>
