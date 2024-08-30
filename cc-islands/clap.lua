@@ -3,7 +3,7 @@ local EXIT
 local Flag
 local Param
 EXIT = { }
-local Args
+local ArgParser
 do
 	local _class_0
 	local _base_0 = {
@@ -12,15 +12,18 @@ do
 				local _obj_0 = self._flags
 				_obj_0[#_obj_0 + 1] = flag
 			end
+			return self
 		end,
 		add_param = function(self, param)
 			do
 				local _obj_0 = self._params
 				_obj_0[#_obj_0 + 1] = param
 			end
+			return self
 		end,
 		no_help = function(self)
 			self._add_help = false
+			return self
 		end,
 		parse = function(self, args)
 			local ret, err = self:_parse(args)
@@ -240,7 +243,7 @@ do
 			self._auto_args_added = false
 		end,
 		__base = _base_0,
-		__name = "Args"
+		__name = "ArgParser"
 	}, {
 		__index = _base_0,
 		__call = function(cls, ...)
@@ -250,23 +253,27 @@ do
 		end
 	})
 	_base_0.__class = _class_0
-	Args = _class_0
+	ArgParser = _class_0
 end
-_module_0["Args"] = Args
+_module_0["ArgParser"] = ArgParser
 do
 	local _class_0
 	local _base_0 = {
 		dest = function(self, _name)
 			self._name = _name
+			return self
 		end,
 		short = function(self, _short)
 			self._short = _short
+			return self
 		end,
 		long = function(self, _long)
 			self._long = _long
+			return self
 		end,
 		required = function(self)
 			self._required = true
+			return self
 		end,
 		takes_param = function(self, _default)
 			if _default == nil then
@@ -274,9 +281,11 @@ do
 			end
 			self._default = _default
 			self._takes_param = true
+			return self
 		end,
 		value_name = function(self, _value_name)
 			self._value_name = _value_name
+			return self
 		end,
 		_repr = function(self)
 			return self._short or self._long
@@ -314,10 +323,12 @@ do
 	local _base_0 = {
 		arg_name = function(self, _arg_name)
 			self._arg_name = _arg_name
+			return self
 		end,
 		default = function(self, _default)
 			self._default = _default
 			self._required = false
+			return self
 		end,
 		_repr = function(self)
 			return self._arg_name or self._name

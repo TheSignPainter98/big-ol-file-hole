@@ -1,14 +1,14 @@
 local quiet, main, get_file, log
-local Args, Flag, Param
+local ArgParser, Flag, Param
 do
 	local _obj_0 = require('clap')
-	Args, Flag, Param = _obj_0.Args, _obj_0.Flag, _obj_0.Param
+	ArgParser, Flag, Param = _obj_0.ArgParser, _obj_0.Flag, _obj_0.Param
 end
 quiet = false
 main = function(args)
 	local arg_parser
 	do
-		local _with_0 = Args('refresh')
+		local _with_0 = ArgParser('refresh')
 		_with_0:add_flag(Flag('quiet'))
 		_with_0:add_param((function()
 			local _with_1 = Param('source')

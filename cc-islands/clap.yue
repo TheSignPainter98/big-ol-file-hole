@@ -4,16 +4,22 @@ local Param -- `local *` does not cover exports
 
 EXIT = {}
 
-export class Args
+export class ArgParser
   new: (@_name) =>
     @_flags = {}
     @_params = {}
     @_add_help = true
     @_auto_args_added = false
 
-  add_flag: (flag) => @_flags[] = flag
-  add_param: (param) => @_params[] = param
-  no_help: => @_add_help = false
+  add_flag: (flag) =>
+    @_flags[] = flag
+    @
+  add_param: (param) =>
+    @_params[] = param
+    @
+  no_help: =>
+    @_add_help = false
+    @
 
   parse: (args) =>
     ret, err = @_parse args
@@ -142,15 +148,18 @@ export class Flag
     @_long = '--' .. @_name\gsub ' ', '-'
     @_required = false
 
-  dest: (@_name) =>
-  short: (@_short) =>
-  long: (@_long) =>
-  required: => @_required = true
+  dest: (@_name) => @
+  short: (@_short) => @
+  long: (@_long) => @
+  required: =>
+    @_required = true
+    @
 
   takes_param: (@_default=nil) =>
     @_takes_param = true
+    @
 
-  value_name: (@_value_name) =>
+  value_name: (@_value_name) => @
 
   _repr: => @_short or @_long
 
@@ -159,7 +168,9 @@ export class Param
     @_arg_name = nil
     @_required = true
 
-  arg_name: (@_arg_name) =>
-  default: (@_default) => @_required = false
+  arg_name: (@_arg_name) => @
+  default: (@_default) =>
+    @_required = false
+    @
 
   _repr: => @_arg_name or @_name
