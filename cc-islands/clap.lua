@@ -7,6 +7,9 @@ local ArgParser
 do
 	local _class_0
 	local _base_0 = {
+		version = function(self, _version)
+			self._version = _version
+		end,
 		add_flag = function(self, flag)
 			do
 				local _obj_0 = self._flags
@@ -125,9 +128,17 @@ do
 		end,
 		_add_auto_args = function(self)
 			if self._add_help then
-				return self:add_flag((function()
+				self:add_flag((function()
 					local _with_0 = Flag('help')
 					_with_0:dest('_help')
+					return _with_0
+				end)())
+			end
+			if (self._version ~= nil) then
+				return self:add_flag((function()
+					local _with_0 = Flag('version')
+					_with_0:dest('_version')
+					_with_0:short(nil)
 					return _with_0
 				end)())
 			end
@@ -237,6 +248,7 @@ do
 	_class_0 = setmetatable({
 		__init = function(self, _name)
 			self._name = _name
+			self._version = nil
 			self._flags = { }
 			self._params = { }
 			self._add_help = true

@@ -6,11 +6,13 @@ EXIT = {}
 
 export class ArgParser
   new: (@_name) =>
+    @_version = nil
     @_flags = {}
     @_params = {}
     @_add_help = true
     @_auto_args_added = false
 
+  version: (@_version) =>
   add_flag: (flag) =>
     @_flags[] = flag
     @
@@ -89,6 +91,11 @@ export class ArgParser
     if @_add_help
       @add_flag with Flag 'help'
         \dest '_help'
+
+    if @_version?
+      @add_flag with Flag 'version'
+        \dest '_version'
+        \short nil
 
   _validate: =>
     flag_tags = with {}
