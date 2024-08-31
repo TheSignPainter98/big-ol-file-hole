@@ -3,6 +3,9 @@ local Flag -- `local *` does not cover exports
 local Param -- `local *` does not cover exports
 
 EXIT = {}
+HELP = {}
+USAGE = {}
+VERSION = {}
 
 export class ArgParser
   new: (@_name) =>
@@ -24,11 +27,18 @@ export class ArgParser
     @
 
   parse: (args) =>
-    ret, err = @_parse args
-    if err?
-      if err != EXIT
-        print err
-      print @_help_message!
+    ret, action = @_parse args
+    if action?
+      switch action
+        when USAGE
+          print @_usage_message!
+        when HELP
+          print @_help_message!
+        when VERSION
+          print @_version_message!
+        else
+          print err
+          print @_usage_message!
       return nil, false
     ret, true
 
@@ -82,15 +92,23 @@ export class ArgParser
       if param._required and not ret[param._name]
         return nil, "flag #{param\_repr!} required"
 
+    if ret._usage
+      return nil, USAGE
     if ret._help
-      return nil, EXIT
+      return nil, HELP
+    if ret._version
+      return nil, VERSION
 
     ret, nil
 
   _add_auto_args: =>
     if @_add_help
       @add_flag with Flag 'help'
+        \dest '_usage'
+        \short nil
+      @add_flag with Flag 'help'
         \dest '_help'
+        \long nil
 
     if @_version?
       @add_flag with Flag 'version'
@@ -115,7 +133,7 @@ export class ArgParser
       arg_names[name] = true
     nil
 
-  _help_message: =>
+  _usage_message: =>
     table.concat with {@_name, ' '}
       flags = [ flag for flag in *@_flags ]
       table.sort flags, (flag_1, flag_2) -> flag_1._name <= flag_2._name
@@ -145,6 +163,12 @@ export class ArgParser
         [] = param\_repr!
         if not param._required
           [] = ']'
+
+  _version_message: =>
+    parts = {@_name}
+    if @_version?
+      parts[] = @_version
+    table.concat parts, ' '
 
 export class Flag
   new: (@_name) =>

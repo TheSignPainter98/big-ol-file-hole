@@ -1,8 +1,11 @@
 local _module_0 = { }
-local EXIT
+local EXIT, HELP, USAGE, VERSION
 local Flag
 local Param
 EXIT = { }
+HELP = { }
+USAGE = { }
+VERSION = { }
 local ArgParser
 do
 	local _class_0
@@ -29,12 +32,18 @@ do
 			return self
 		end,
 		parse = function(self, args)
-			local ret, err = self:_parse(args)
-			if (err ~= nil) then
-				if err ~= EXIT then
+			local ret, action = self:_parse(args)
+			if (action ~= nil) then
+				if USAGE == action then
+					print(self:_usage_message())
+				elseif HELP == action then
+					print(self:_help_message())
+				elseif VERSION == action then
+					print(self:_version_message())
+				else
 					print(err)
+					print(self:_usage_message())
 				end
-				print(self:_help_message())
 				return nil, false
 			end
 			return ret, true
@@ -121,8 +130,14 @@ do
 					return nil, "flag " .. tostring(param:_repr()) .. " required"
 				end
 			end
+			if ret._usage then
+				return nil, USAGE
+			end
 			if ret._help then
-				return nil, EXIT
+				return nil, HELP
+			end
+			if ret._version then
+				return nil, VERSION
 			end
 			return ret, nil
 		end,
@@ -130,7 +145,14 @@ do
 			if self._add_help then
 				self:add_flag((function()
 					local _with_0 = Flag('help')
+					_with_0:dest('_usage')
+					_with_0:short(nil)
+					return _with_0
+				end)())
+				self:add_flag((function()
+					local _with_0 = Flag('help')
 					_with_0:dest('_help')
+					_with_0:long(nil)
 					return _with_0
 				end)())
 			end
@@ -183,7 +205,7 @@ do
 			end
 			return nil
 		end,
-		_help_message = function(self)
+		_usage_message = function(self)
 			return table.concat((function()
 				local _with_0 = {
 					self._name,
@@ -240,6 +262,15 @@ do
 				end
 				return _with_0
 			end)())
+		end,
+		_version_message = function(self)
+			local parts = {
+				self._name
+			}
+			if (self._version ~= nil) then
+				parts[#parts + 1] = self._version
+			end
+			return table.concat(parts, ' ')
 		end
 	}
 	if _base_0.__index == nil then
