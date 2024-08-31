@@ -262,8 +262,13 @@ export class Flag
   description: (@_description) => @
   transform: (@_transform) => @
 
-  takes_param: (@_default=nil) =>
+  takes_param: () =>
     @_takes_param = true
+    @
+  default: (@_default) =>
+    if 'boolean' == type @_default
+      error 'boolean default flag arguments not currently supported'
+    @takes_param!
     @
 
   value_name: (@_value_name) => @

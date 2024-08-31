@@ -485,12 +485,16 @@ do
 			self._transform = _transform
 			return self
 		end,
-		takes_param = function(self, _default)
-			if _default == nil then
-				_default = nil
-			end
-			self._default = _default
+		takes_param = function(self)
 			self._takes_param = true
+			return self
+		end,
+		default = function(self, _default)
+			self._default = _default
+			if 'boolean' == type(self._default) then
+				error('boolean default flag arguments not currently supported')
+			end
+			self:takes_param()
 			return self
 		end,
 		value_name = function(self, _value_name)
