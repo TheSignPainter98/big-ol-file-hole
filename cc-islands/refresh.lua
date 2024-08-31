@@ -88,12 +88,12 @@ get_file_content = function(repo, path)
 		return "failed"
 	end
 	log('success')
-	local content = resp.readAll()
+	local content = resp:readAll()
 	resp.close()
 	if not (content ~= nil) then
 		error("received content nil for some reason")
 	end
-	return content:readAll()
+	return content
 end
 log = function(message)
 	if quiet then
