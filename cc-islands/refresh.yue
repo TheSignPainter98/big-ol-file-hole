@@ -32,14 +32,13 @@ main = (args) ->
       any_failed = true
       continue
 
-    assert 'string' == type file_content
-    print "got #{#file_content} bytes"
+    debug "got #{#file_content}B"
     file = fs.open path, 'w'
     if not file?
       error "cannot write to #{path}"
     with file
-      \write file_content
-      \close!
+      .write file_content
+      .close!
 
   if not any_failed
     log 'SUCCESS'
