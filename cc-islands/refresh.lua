@@ -40,7 +40,7 @@ main = function(args)
 			error(err)
 		end
 		log("writing content to " .. tostring(path) .. "...")
-		local file = fs.open(path, 'w+')
+		local file = fs.open(path, 'w')
 		if not (file ~= nil) then
 			error("cannot write to " .. tostring(path))
 		end

@@ -26,7 +26,7 @@ main = (args) ->
     if err?
       error err
     log "writing content to #{path}..."
-    file = fs.open path, 'w+'
+    file = fs.open path, 'w'
     if not file?
       error "cannot write to #{path}"
     with file
