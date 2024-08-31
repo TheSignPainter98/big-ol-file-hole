@@ -31,7 +31,7 @@ main = function(args)
 	end
 	quiet = args.quiet
 	log("downloading files from " .. tostring(args.source))
-	local _list_0 = get_paths('.')
+	local _list_0 = get_paths('/')
 	for _index_0 = 1, #_list_0 do
 		local path = _list_0[_index_0]
 		log("downloading " .. tostring(path) .. "...")
@@ -54,6 +54,9 @@ get_paths = function(path, paths)
 	end
 	if not fs.isDir(path) then
 		error("get_paths must be called with a directory, got " .. tostring(path))
+	end
+	if path == '/rom' then
+		return paths
 	end
 	local _list_0 = fs.list(path)
 	for _index_0 = 1, #_list_0 do

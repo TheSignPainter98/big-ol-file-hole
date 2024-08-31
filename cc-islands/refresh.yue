@@ -20,7 +20,7 @@ main = (args) ->
 
 
   log "downloading files from #{args.source}"
-  for path in *get_paths '.'
+  for path in *get_paths '/'
     log "downloading #{path}..."
     file_content, err = get_file_content args.source, path
     if err?
@@ -35,6 +35,8 @@ main = (args) ->
 get_paths = (path, paths={} using nil) ->
   if not fs.isDir path
     error "get_paths must be called with a directory, got #{path}"
+  if path == '/rom'
+    return paths
 
   for child in *fs.list path
     child_path = "#{path}/#{child}"
