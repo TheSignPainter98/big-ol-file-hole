@@ -37,7 +37,7 @@ main = function(args)
 	end
 	quiet = args.quiet
 	verbose = args.verbose
-	log("downloading files from " .. tostring(args.source))
+	debug("downloading files from " .. tostring(args.source))
 	local any_failed = false
 	local _list_0 = get_paths('/')
 	for _index_0 = 1, #_list_0 do
@@ -53,7 +53,7 @@ main = function(args)
 		::_continue_0::
 	end
 	if not any_failed then
-		return log('success')
+		return log('SUCCESS')
 	end
 end
 get_paths = function(path, paths)
@@ -90,16 +90,16 @@ get_file_content = function(repo, path)
 	if not ok then
 		return nil, err
 	end
-	log("downloading " .. tostring(url) .. "...")
+	debug("downloading " .. tostring(url) .. "...")
 	local resp = http.get(url)
-	if not (response ~= nil) then
-		return nil, "FAILED"
+	if not (resp ~= nil) then
+		return nil, 'FAILED'
 	end
-	log('success')
+	debug('done')
 	local content = resp:readAll()
 	resp:close()
 	if not (content ~= nil) then
-		error("received content nil for some reason")
+		error('received content nil for some reason')
 	end
 	return content, nil
 end

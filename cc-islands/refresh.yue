@@ -22,7 +22,7 @@ main = (args) ->
   quiet = args.quiet
   verbose = args.verbose
 
-  log "downloading files from #{args.source}"
+  debug "downloading files from #{args.source}"
   any_failed = false
   for path in *get_paths '/'
     log "#{path}..."
@@ -40,7 +40,7 @@ main = (args) ->
     --   \close!
 
   if not any_failed
-    log 'success'
+    log 'SUCCESS'
 
 get_paths = (path, paths={} using nil) ->
   if not fs.isDir path
@@ -66,18 +66,18 @@ get_file_content = (repo, path using nil) ->
   if not ok
     return nil, err
 
-  log "downloading #{url}..."
+  debug "downloading #{url}..."
 
   resp = http.get url
-  if not response?
-    return nil, "FAILED"
+  if not resp?
+    return nil, 'FAILED'
 
-  log 'success'
+  debug 'done'
 
   content = resp\readAll!
   resp\close!
   if not content?
-    error "received content nil for some reason"
+    error 'received content nil for some reason'
   content, nil
 
 log = (message using quiet) ->
