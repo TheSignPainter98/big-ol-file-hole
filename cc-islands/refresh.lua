@@ -62,7 +62,12 @@ get_paths = function(path, paths)
 	local _list_0 = fs.list(path)
 	for _index_0 = 1, #_list_0 do
 		local child = _list_0[_index_0]
-		local child_path = tostring(path) .. "/" .. tostring(child)
+		local child_path
+		if path ~= '/' then
+			child_path = tostring(path) .. "/" .. tostring(child)
+		else
+			child_path = "/" .. tostring(child)
+		end
 		if fs.isDir(child_path) then
 			get_paths(child_path, paths)
 		else

@@ -42,7 +42,10 @@ get_paths = (path, paths={} using nil) ->
     return paths
 
   for child in *fs.list path
-    child_path = "#{path}/#{child}"
+    child_path = if path != '/'
+      "#{path}/#{child}"
+    else
+      "/#{child}"
     if fs.isDir child_path
       get_paths child_path, paths
     else
