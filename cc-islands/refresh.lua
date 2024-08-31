@@ -1,10 +1,11 @@
-local quiet, main, get_paths, get_file_content, log
+local quiet, verbose, main, get_paths, get_file_content, log, debug
 local ArgParser, Flag, Param
 do
 	local _obj_0 = require('clap')
 	ArgParser, Flag, Param = _obj_0.ArgParser, _obj_0.Flag, _obj_0.Param
 end
 quiet = false
+verbose = false
 main = function(args)
 	local arg_parser
 	do
@@ -14,6 +15,11 @@ main = function(args)
 		_with_0:add_arg((function()
 			local _with_1 = Flag('quiet')
 			_with_1:description('output quietly')
+			return _with_1
+		end)())
+		_with_0:add_arg((function()
+			local _with_1 = Flag('verbose')
+			_with_1:description('output verbosely')
 			return _with_1
 		end)())
 		_with_0:add_arg((function()
@@ -30,20 +36,20 @@ main = function(args)
 		return
 	end
 	quiet = args.quiet
+	verbose = args.verbose
 	log("downloading files from " .. tostring(args.source))
 	local any_failed = false
 	local _list_0 = get_paths('/')
 	for _index_0 = 1, #_list_0 do
 		local path = _list_0[_index_0]
-		log("downloading " .. tostring(path) .. "...")
+		log(tostring(path) .. "...")
 		local file_content, err = get_file_content(args.source, path)
 		if (err ~= nil) then
 			log(err)
 			any_failed = true
 			goto _continue_0
 		end
-		log("writing content to " .. tostring(path) .. "...")
-		print(file_content)
+		print("got file content: '" .. tostring(file_content) .. "'")
 		::_continue_0::
 	end
 	if not any_failed then
@@ -87,7 +93,7 @@ get_file_content = function(repo, path)
 	log("downloading " .. tostring(url) .. "...")
 	local resp = http.get(url)
 	if not (response ~= nil) then
-		return nil, "failed"
+		return nil, "FAILED"
 	end
 	log('success')
 	local content = resp:readAll()
@@ -99,6 +105,12 @@ get_file_content = function(repo, path)
 end
 log = function(message)
 	if quiet then
+		return
+	end
+	return print(message)
+end
+debug = function(message)
+	if not verbose then
 		return
 	end
 	return print(message)

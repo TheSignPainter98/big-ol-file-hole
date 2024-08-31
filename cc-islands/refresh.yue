@@ -3,6 +3,7 @@ local *
 import ArgParser, Flag, Param from require 'clap'
 
 quiet = false
+verbose = false
 
 main = (args) ->
   arg_parser = with ArgParser 'refresh'
@@ -10,6 +11,8 @@ main = (args) ->
     \description 'a downloader of up-to-date files'
     \add_arg with Flag 'quiet'
       \description 'output quietly'
+    \add_arg with Flag 'verbose'
+      \description 'output verbosely'
     \add_arg with Param 'source'
       \default 'https://raw.githubusercontent.com/TheSignPainter98/big-ol-file-hole/master/cc-islands'
       \description 'where to get the files from'
@@ -17,19 +20,18 @@ main = (args) ->
   if not ok
     return
   quiet = args.quiet
-
+  verbose = args.verbose
 
   log "downloading files from #{args.source}"
   any_failed = false
   for path in *get_paths '/'
-    log "downloading #{path}..."
+    log "#{path}..."
     file_content, err = get_file_content args.source, path
     if err?
       log err
       any_failed = true
       continue
-    log "writing content to #{path}..."
-    print file_content
+    print "got file content: '#{file_content}'"
     -- file = fs.open path, 'w'
     -- if not file?
     --   error "cannot write to #{path}"
@@ -58,7 +60,7 @@ get_paths = (path, paths={} using nil) ->
   paths
 
 get_file_content = (repo, path using nil) ->
-  assert '/'  == path\sub 1, 1
+  assert '/' == path\sub 1, 1
   url = "#{repo}#{path}"
   ok, err = http.checkURL url
   if not ok
@@ -68,7 +70,7 @@ get_file_content = (repo, path using nil) ->
 
   resp = http.get url
   if not response?
-    return nil, "failed"
+    return nil, "FAILED"
 
   log 'success'
 
@@ -80,6 +82,11 @@ get_file_content = (repo, path using nil) ->
 
 log = (message using quiet) ->
   if quiet
+    return
+  print message
+
+debug = (message using verbose) ->
+  if not verbose
     return
   print message
 
