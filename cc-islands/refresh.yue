@@ -26,7 +26,10 @@ main = (args) ->
     if err?
       error err
     log "writing content to #{path}..."
-    with fs.open path, 'w+'
+    file = fs.open path, 'w+'
+    if not file?
+      error "cannot write to #{path}"
+    with file
       \write file_content
       \close!
 

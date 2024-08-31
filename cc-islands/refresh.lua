@@ -40,11 +40,12 @@ main = function(args)
 			error(err)
 		end
 		log("writing content to " .. tostring(path) .. "...")
-		do
-			local _with_0 = fs.open(path, 'w+')
-			_with_0:write(file_content)
-			_with_0:close()
+		local file = fs.open(path, 'w+')
+		if not (file ~= nil) then
+			error("cannot write to " .. tostring(path))
 		end
+		file:write(file_content)
+		file:close()
 	end
 	return log('success')
 end
