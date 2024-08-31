@@ -77,7 +77,8 @@ get_paths = function(path, paths)
 	return paths
 end
 get_file_content = function(repo, path)
-	local url = tostring(repo) .. "/" .. tostring(path)
+	assert('/' == path:sub(1, 1))
+	local url = tostring(repo) .. tostring(path)
 	local ok, err = http.checkURL(url)
 	if not ok then
 		return nil, err
