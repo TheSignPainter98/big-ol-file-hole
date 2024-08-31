@@ -18,33 +18,34 @@ main = (args) ->
     return
   quiet = args.quiet
 
-  print "quiet: #{args.quiet}"
-  print "source: #{args.source}"
 
+  log "downloading files from #{args.source}"
   for path in *get_paths '.'
-    file_content, err = get_file_content path
+    log "downloading #{path}..."
+    file_content, err = get_file_content args.source, path
     if err?
       error err
+    log "writing content to #{path}..."
     with fs.open path, 'w+'
       \write file_content
       \close!
 
-get_paths = (path, stack={""}, paths={}) ->
+  log 'success'
+
+get_paths = (path, paths={}) ->
   if not fs.isDir path
     error "get_paths must be called with a directory, got #{path}"
 
   for child in *fs.list path
-    child_path = "#{stack[#stack]}/#{child}"
+    child_path = "#{path}/#{child}"
     if fs.isDir child_path
-      stack[] = child_path
-      get_paths child, stack, paths
-      stack[] = nil
+      get_paths child_path, paths
     else
       paths[] = child_path
   paths
 
-get_file_content = (path using nil) ->
-  url = "#{REPO}/#{path}"
+get_file_content = (repo, path using nil) ->
+  url = "#{repo}/#{path}"
   ok, err = http.checkUrl url
   if not ok
     return err
@@ -66,6 +67,6 @@ get_file_content = (path using nil) ->
 log = (message using quiet) ->
   if quiet
     return
-  write message
+  print message
 
 main {...}

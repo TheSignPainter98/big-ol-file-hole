@@ -30,28 +30,25 @@ main = function(args)
 		return
 	end
 	quiet = args.quiet
-	print("quiet: " .. tostring(args.quiet))
-	print("source: " .. tostring(args.source))
+	log("downloading files from " .. tostring(args.source))
 	local _list_0 = get_paths('.')
 	for _index_0 = 1, #_list_0 do
 		local path = _list_0[_index_0]
-		local file_content, err = get_file_content(path)
+		log("downloading " .. tostring(path) .. "...")
+		local file_content, err = get_file_content(args.source, path)
 		if (err ~= nil) then
 			error(err)
 		end
+		log("writing content to " .. tostring(path) .. "...")
 		do
 			local _with_0 = fs.open(path, 'w+')
 			_with_0:write(file_content)
 			_with_0:close()
 		end
 	end
+	return log('success')
 end
-get_paths = function(path, stack, paths)
-	if stack == nil then
-		stack = {
-			""
-		}
-	end
+get_paths = function(path, paths)
 	if paths == nil then
 		paths = { }
 	end
@@ -61,19 +58,17 @@ get_paths = function(path, stack, paths)
 	local _list_0 = fs.list(path)
 	for _index_0 = 1, #_list_0 do
 		local child = _list_0[_index_0]
-		local child_path = tostring(stack[#stack]) .. "/" .. tostring(child)
+		local child_path = tostring(path) .. "/" .. tostring(child)
 		if fs.isDir(child_path) then
-			stack[#stack + 1] = child_path
-			get_paths(child, stack, paths)
-			stack[#stack + 1] = nil
+			get_paths(child_path, paths)
 		else
 			paths[#paths + 1] = child_path
 		end
 	end
 	return paths
 end
-get_file_content = function(path)
-	local url = tostring(REPO) .. "/" .. tostring(path)
+get_file_content = function(repo, path)
+	local url = tostring(repo) .. "/" .. tostring(path)
 	local ok, err = http.checkUrl(url)
 	if not ok then
 		return err
@@ -95,7 +90,7 @@ log = function(message)
 	if quiet then
 		return
 	end
-	return write(message)
+	return print(message)
 end
 return main({
 	...
