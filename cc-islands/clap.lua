@@ -2,25 +2,73 @@ local _module_0 = { }
 local EXIT, HELP, USAGE, VERSION
 local Flag
 local Param
-EXIT = { }
-HELP = { }
-USAGE = { }
-VERSION = { }
+EXIT = setmetatable({ }, {
+	__tostring = function(self)
+		return "exit"
+	end
+})
+HELP = setmetatable({ }, {
+	__tostring = function(self)
+		return "show help"
+	end
+})
+USAGE = setmetatable({ }, {
+	__tostring = function(self)
+		return "show usage"
+	end
+})
+VERSION = setmetatable({ }, {
+	__tostring = function(self)
+		return "show version"
+	end
+})
 local ArgParser
 do
 	local _class_0
 	local _base_0 = {
 		version = function(self, _version)
 			self._version = _version
+			return self
 		end,
-		add_flag = function(self, flag)
+		add_arg = function(self, arg)
+			local arg_type
 			do
-				local _obj_0 = self._flags
-				_obj_0[#_obj_0 + 1] = flag
+				local _obj_0 = getmetatable(arg)
+				if _obj_0 ~= nil then
+					do
+						local _obj_1 = _obj_0.__class
+						if _obj_1 ~= nil then
+							arg_type = _obj_1.__name
+						end
+					end
+				end
+			end
+			if 'Flag' == arg_type then
+				do
+					local _obj_0 = self._flags
+					_obj_0[#_obj_0 + 1] = arg
+				end
+			elseif 'Param' == arg_type then
+				do
+					local _obj_0 = self._params
+					_obj_0[#_obj_0 + 1] = arg
+				end
+			else
+				error("cannot use a " .. tostring(type(arg)) .. " as an arg")
 			end
 			return self
 		end,
 		add_param = function(self, param)
+			local param_type = getmetatable(param).__class.__name
+			if param_type ~= 'Param' then
+				error("expected Param, got a " .. tostring((function()
+					if param_type ~= nil then
+						return param_type
+					else
+						return type(param)
+					end
+				end)()))
+			end
 			do
 				local _obj_0 = self._params
 				_obj_0[#_obj_0 + 1] = param
@@ -31,14 +79,18 @@ do
 			self._add_help = false
 			return self
 		end,
+		description = function(self, _description)
+			self._description = _description
+			return self
+		end,
 		parse = function(self, args)
-			local ret, action = self:_parse(args)
-			if (action ~= nil) then
-				if USAGE == action then
+			local ret, err = self:_parse(args)
+			if (err ~= nil) then
+				if USAGE == err then
 					print(self:_usage_message())
-				elseif HELP == action then
+				elseif HELP == err then
 					print(self:_help_message())
-				elseif VERSION == action then
+				elseif VERSION == err then
 					print(self:_version_message())
 				else
 					print(err)
@@ -90,7 +142,9 @@ do
 				flag_map = _with_0
 			end
 			local curr_param = 1
-			for i = 1, #args do
+			local i = 0
+			while i < #args do
+				i = i + 1
 				local arg = args[i]
 				if '-' == arg:sub(1, 1) then
 					local flag = flag_map[arg]
@@ -101,7 +155,7 @@ do
 						ret[flag._name] = true
 					else
 						i = i + 1
-						local flag_arg = arg[i]
+						local flag_arg = args[i]
 						if not (flag_arg ~= nil) then
 							return nil, "flag " .. tostring(arg) .. " expected an argument"
 						end
@@ -143,23 +197,26 @@ do
 		end,
 		_add_auto_args = function(self)
 			if self._add_help then
-				self:add_flag((function()
+				self:add_arg((function()
 					local _with_0 = Flag('help')
 					_with_0:dest('_usage')
-					_with_0:short(nil)
+					_with_0:description('print short help')
+					_with_0:long(nil)
 					return _with_0
 				end)())
-				self:add_flag((function()
+				self:add_arg((function()
 					local _with_0 = Flag('help')
 					_with_0:dest('_help')
-					_with_0:long(nil)
+					_with_0:description('print long help')
+					_with_0:short(nil)
 					return _with_0
 				end)())
 			end
 			if (self._version ~= nil) then
-				return self:add_flag((function()
+				return self:add_arg((function()
 					local _with_0 = Flag('version')
 					_with_0:dest('_version')
+					_with_0:description('print version')
 					_with_0:short(nil)
 					return _with_0
 				end)())
@@ -208,6 +265,7 @@ do
 		_usage_message = function(self)
 			return table.concat((function()
 				local _with_0 = {
+					'Usage: ',
 					self._name,
 					' '
 				}
@@ -263,6 +321,78 @@ do
 				return _with_0
 			end)())
 		end,
+		_help_message = function(self)
+			local usage_message = self:_usage_message()
+			local lines
+			do
+				local _with_0 = { }
+				if (self._description ~= nil) then
+					_with_0[#_with_0 + 1] = tostring(self._name) .. " - " .. tostring(self._description)
+				end
+				_with_0[#_with_0 + 1] = ''
+				_with_0[#_with_0 + 1] = self:_usage_message()
+				if #self._params > 0 then
+					_with_0[#_with_0 + 1] = ''
+					_with_0[#_with_0 + 1] = 'Parameters'
+					local longest_param_repr_len = math.max(unpack((function()
+						local _accum_0 = { }
+						local _len_0 = 1
+						local _list_0 = self._params
+						for _index_0 = 1, #_list_0 do
+							local p = _list_0[_index_0]
+							_accum_0[_len_0] = #p:_repr()
+							_len_0 = _len_0 + 1
+						end
+						return _accum_0
+					end)()))
+					local _list_0 = self._params
+					for _index_0 = 1, #_list_0 do
+						local param = _list_0[_index_0]
+						do
+							local description = param._description
+							if description then
+								local repr = param:_repr()
+								local padding = (' '):rep(longest_param_repr_len - #repr)
+								_with_0[#_with_0 + 1] = tostring(repr) .. tostring(padding) .. " " .. tostring(description)
+							else
+								_with_0[#_with_0 + 1] = param:_repr()
+							end
+						end
+					end
+				end
+				if #self._flags > 0 then
+					_with_0[#_with_0 + 1] = ''
+					_with_0[#_with_0 + 1] = 'Flags'
+					local longest_flag_repr_len = math.max(unpack((function()
+						local _accum_0 = { }
+						local _len_0 = 1
+						local _list_0 = self._flags
+						for _index_0 = 1, #_list_0 do
+							local p = _list_0[_index_0]
+							_accum_0[_len_0] = #p:_long_repr()
+							_len_0 = _len_0 + 1
+						end
+						return _accum_0
+					end)()))
+					local _list_0 = self._flags
+					for _index_0 = 1, #_list_0 do
+						local flag = _list_0[_index_0]
+						do
+							local description = flag._description
+							if description then
+								local repr = flag:_long_repr()
+								local padding = (' '):rep(longest_flag_repr_len - #repr)
+								_with_0[#_with_0 + 1] = tostring(repr) .. tostring(padding) .. " " .. tostring(description)
+							else
+								_with_0[#_with_0 + 1] = flag:_long_repr()
+							end
+						end
+					end
+				end
+				lines = _with_0
+			end
+			return table.concat(lines, '\n')
+		end,
 		_version_message = function(self)
 			local parts = {
 				self._name
@@ -283,6 +413,7 @@ do
 			self._flags = { }
 			self._params = { }
 			self._add_help = true
+			self._description = nil
 			self._auto_args_added = false
 		end,
 		__base = _base_0,
@@ -318,6 +449,10 @@ do
 			self._required = true
 			return self
 		end,
+		description = function(self, _description)
+			self._description = _description
+			return self
+		end,
 		takes_param = function(self, _default)
 			if _default == nil then
 				_default = nil
@@ -332,6 +467,13 @@ do
 		end,
 		_repr = function(self)
 			return self._short or self._long
+		end,
+		_long_repr = function(self)
+			if (self._short ~= nil) and (self._long ~= nil) then
+				return tostring(self._short) .. ", " .. tostring(self._long)
+			else
+				return self:_repr()
+			end
 		end
 	}
 	if _base_0.__index == nil then
@@ -346,6 +488,7 @@ do
 			self._short = '-' .. self._name:sub(1, 1)
 			self._long = '--' .. self._name:gsub(' ', '-')
 			self._required = false
+			self._description = nil
 		end,
 		__base = _base_0,
 		__name = "Flag"
@@ -373,6 +516,10 @@ do
 			self._required = false
 			return self
 		end,
+		description = function(self, _description)
+			self._description = _description
+			return self
+		end,
 		_repr = function(self)
 			return self._arg_name or self._name
 		end
@@ -385,6 +532,7 @@ do
 			self._name = _name
 			self._arg_name = nil
 			self._required = true
+			self._description = nil
 		end,
 		__base = _base_0,
 		__name = "Param"

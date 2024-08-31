@@ -2,10 +2,10 @@ local *
 local Flag -- `local *` does not cover exports
 local Param -- `local *` does not cover exports
 
-EXIT = {}
-HELP = {}
-USAGE = {}
-VERSION = {}
+EXIT = <tostring>: => "exit"
+HELP = <tostring>: => "show help"
+USAGE = <tostring>: => "show usage"
+VERSION =  <tostring>: => "show version"
 
 export class ArgParser
   new: (@_name) =>
@@ -13,23 +13,35 @@ export class ArgParser
     @_flags = {}
     @_params = {}
     @_add_help = true
+    @_description = nil
     @_auto_args_added = false
 
-  version: (@_version) =>
-  add_flag: (flag) =>
-    @_flags[] = flag
+  version: (@_version) => @
+  add_arg: (arg) =>
+    arg_type = arg.<>?.__class?.__name
+    switch arg_type
+      when 'Flag'
+        @_flags[] = arg
+      when 'Param'
+        @_params[] = arg
+      else
+        error "cannot use a #{type arg} as an arg"
     @
   add_param: (param) =>
+    param_type = param.<class>.__name
+    if param_type != 'Param'
+      error "expected Param, got a #{param_type ?? type param}"
     @_params[] = param
     @
   no_help: =>
     @_add_help = false
     @
+  description: (@_description) => @
 
   parse: (args) =>
-    ret, action = @_parse args
-    if action?
-      switch action
+    ret, err = @_parse args
+    if err?
+      switch err
         when USAGE
           print @_usage_message!
         when HELP
@@ -64,7 +76,9 @@ export class ArgParser
           [flag._long] = flag
 
     curr_param = 1
-    for i = 1, #args
+    i = 0
+    while i < #args
+      i += 1
       arg = args[i]
       if '-' == arg\sub 1, 1
         flag = flag_map[arg]
@@ -74,7 +88,7 @@ export class ArgParser
           true
         else
           i += 1
-          flag_arg = arg[i]
+          flag_arg = args[i]
           if not flag_arg?
             return nil, "flag #{arg} expected an argument"
           flag_arg
@@ -103,16 +117,19 @@ export class ArgParser
 
   _add_auto_args: =>
     if @_add_help
-      @add_flag with Flag 'help'
+      @add_arg with Flag 'help'
         \dest '_usage'
-        \short nil
-      @add_flag with Flag 'help'
-        \dest '_help'
+        \description 'print short help'
         \long nil
+      @add_arg with Flag 'help'
+        \dest '_help'
+        \description 'print long help'
+        \short nil
 
     if @_version?
-      @add_flag with Flag 'version'
+      @add_arg with Flag 'version'
         \dest '_version'
+        \description 'print version'
         \short nil
 
   _validate: =>
@@ -134,7 +151,7 @@ export class ArgParser
     nil
 
   _usage_message: =>
-    table.concat with {@_name, ' '}
+    table.concat with {'Usage: ', @_name, ' '}
       flags = [ flag for flag in *@_flags ]
       table.sort flags, (flag_1, flag_2) -> flag_1._name <= flag_2._name
 
@@ -164,6 +181,44 @@ export class ArgParser
         if not param._required
           [] = ']'
 
+  _help_message: =>
+    usage_message = @_usage_message!
+    lines = with {}
+      if @_description?
+        [] = "#{@_name} - #{@_description}"
+
+      [] = ''
+      [] = @_usage_message!
+
+
+      if #@_params > 0
+        [] = ''
+        [] = 'Parameters'
+
+        longest_param_repr_len = math.max unpack [ #p\_repr! for p in *@_params ]
+        for param in *@_params
+          if description = param._description
+            repr = param\_repr!
+            padding = ' '\rep longest_param_repr_len - #repr
+            [] = "#{repr}#{padding} #{description}"
+          else
+            [] = param\_repr!
+
+      if #@_flags > 0
+        [] = ''
+        [] = 'Flags'
+
+        longest_flag_repr_len = math.max unpack [ #p\_long_repr! for p in *@_flags ]
+        for flag in *@_flags
+          if description = flag._description
+            repr = flag\_long_repr!
+            padding = ' '\rep longest_flag_repr_len - #repr
+            [] = "#{repr}#{padding} #{description}"
+          else
+            [] = flag\_long_repr!
+
+    table.concat lines, '\n'
+
   _version_message: =>
     parts = {@_name}
     if @_version?
@@ -178,6 +233,7 @@ export class Flag
     @_short = '-' .. @_name\sub 1, 1
     @_long = '--' .. @_name\gsub ' ', '-'
     @_required = false
+    @_description = nil
 
   dest: (@_name) => @
   short: (@_short) => @
@@ -185,6 +241,7 @@ export class Flag
   required: =>
     @_required = true
     @
+  description: (@_description) => @
 
   takes_param: (@_default=nil) =>
     @_takes_param = true
@@ -193,15 +250,22 @@ export class Flag
   value_name: (@_value_name) => @
 
   _repr: => @_short or @_long
+  _long_repr: =>
+    if @_short? and @_long?
+      "#{@_short}, #{@_long}"
+    else
+      @_repr!
 
 export class Param
   new: (@_name) =>
     @_arg_name = nil
     @_required = true
+    @_description = nil
 
   arg_name: (@_arg_name) => @
   default: (@_default) =>
     @_required = false
     @
+  description: (@_description) => @
 
   _repr: => @_arg_name or @_name

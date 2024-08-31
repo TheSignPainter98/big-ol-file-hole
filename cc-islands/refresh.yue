@@ -6,9 +6,13 @@ quiet = false
 
 main = (args) ->
   arg_parser = with ArgParser 'refresh'
-    \add_flag Flag 'quiet'
-    \add_param with Param 'source'
-      \default 'github.com/TheSignPainter98/big-ol-file-hole'
+    \version '0.1'
+    \description 'a downloader of up-to-date files'
+    \add_arg with Flag 'quiet'
+      \description 'output quietly'
+    \add_arg with Param 'source'
+      -- \default 'github.com/TheSignPainter98/big-ol-file-hole'
+      \description 'where to get the files from'
   args, ok = arg_parser\parse args
   if not ok
     return

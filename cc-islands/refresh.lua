@@ -9,10 +9,16 @@ main = function(args)
 	local arg_parser
 	do
 		local _with_0 = ArgParser('refresh')
-		_with_0:add_flag(Flag('quiet'))
-		_with_0:add_param((function()
+		_with_0:version('0.1')
+		_with_0:description('a downloader of up-to-date files')
+		_with_0:add_arg((function()
+			local _with_1 = Flag('quiet')
+			_with_1:description('output quietly')
+			return _with_1
+		end)())
+		_with_0:add_arg((function()
 			local _with_1 = Param('source')
-			_with_1:default('github.com/TheSignPainter98/big-ol-file-hole')
+			_with_1:description('where to get the files from')
 			return _with_1
 		end)())
 		arg_parser = _with_0
