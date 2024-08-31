@@ -99,19 +99,19 @@ export class ArgParser
         ret[param._name] = arg
         curr_param += 1
 
-    for flag in *@_flags
-      if flag._required and not ret[flag._name]
-        return nil, "flag #{flag\_repr!} required"
-    for param in *@_params
-      if param._required and not ret[param._name]
-        return nil, "flag #{param\_repr!} required"
-
     if ret._usage
       return nil, USAGE
     if ret._help
       return nil, HELP
     if ret._version
       return nil, VERSION
+
+    for flag in *@_flags
+      if flag._required and not ret[flag._name]
+        return nil, "flag #{flag\_repr!} required"
+    for param in *@_params
+      if param._required and not ret[param._name]
+        return nil, "flag #{param\_repr!} required"
 
     ret, nil
 

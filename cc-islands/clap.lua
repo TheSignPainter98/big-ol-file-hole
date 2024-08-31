@@ -170,6 +170,15 @@ do
 					curr_param = curr_param + 1
 				end
 			end
+			if ret._usage then
+				return nil, USAGE
+			end
+			if ret._help then
+				return nil, HELP
+			end
+			if ret._version then
+				return nil, VERSION
+			end
 			local _list_0 = self._flags
 			for _index_0 = 1, #_list_0 do
 				local flag = _list_0[_index_0]
@@ -183,15 +192,6 @@ do
 				if param._required and not ret[param._name] then
 					return nil, "flag " .. tostring(param:_repr()) .. " required"
 				end
-			end
-			if ret._usage then
-				return nil, USAGE
-			end
-			if ret._help then
-				return nil, HELP
-			end
-			if ret._version then
-				return nil, VERSION
 			end
 			return ret, nil
 		end,

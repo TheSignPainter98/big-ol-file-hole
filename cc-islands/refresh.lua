@@ -18,6 +18,7 @@ main = function(args)
 		end)())
 		_with_0:add_arg((function()
 			local _with_1 = Param('source')
+			_with_1:default('github.com/TheSignPainter98/big-ol-file-hole')
 			_with_1:description('where to get the files from')
 			return _with_1
 		end)())
