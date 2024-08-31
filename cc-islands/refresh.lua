@@ -18,7 +18,7 @@ main = function(args)
 		end)())
 		_with_0:add_arg((function()
 			local _with_1 = Param('source')
-			_with_1:default('https://github.com/TheSignPainter98/big-ol-file-hole')
+			_with_1:default('https://raw.githubusercontent.com/TheSignPainter98/big-ol-file-hole/master/cc-islands')
 			_with_1:description('where to get the files from')
 			return _with_1
 		end)())
@@ -31,6 +31,7 @@ main = function(args)
 	end
 	quiet = args.quiet
 	log("downloading files from " .. tostring(args.source))
+	local any_failed = false
 	local _list_0 = get_paths('/')
 	for _index_0 = 1, #_list_0 do
 		local path = _list_0[_index_0]
@@ -38,13 +39,16 @@ main = function(args)
 		local file_content, err = get_file_content(args.source, path)
 		if (err ~= nil) then
 			log(err)
+			any_failed = true
 			goto _continue_0
 		end
 		log("writing content to " .. tostring(path) .. "...")
 		print(file_content)
 		::_continue_0::
 	end
-	return log('success')
+	if not any_failed then
+		return log('success')
+	end
 end
 get_paths = function(path, paths)
 	if paths == nil then

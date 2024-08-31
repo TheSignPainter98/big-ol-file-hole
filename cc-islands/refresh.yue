@@ -11,7 +11,7 @@ main = (args) ->
     \add_arg with Flag 'quiet'
       \description 'output quietly'
     \add_arg with Param 'source'
-      \default 'https://github.com/TheSignPainter98/big-ol-file-hole'
+      \default 'https://raw.githubusercontent.com/TheSignPainter98/big-ol-file-hole/master/cc-islands'
       \description 'where to get the files from'
   args, ok = arg_parser\parse args
   if not ok
@@ -20,11 +20,13 @@ main = (args) ->
 
 
   log "downloading files from #{args.source}"
+  any_failed = false
   for path in *get_paths '/'
     log "downloading #{path}..."
     file_content, err = get_file_content args.source, path
     if err?
       log err
+      any_failed = true
       continue
     log "writing content to #{path}..."
     print file_content
@@ -35,7 +37,8 @@ main = (args) ->
     --   \write file_content
     --   \close!
 
-  log 'success'
+  if not any_failed
+    log 'success'
 
 get_paths = (path, paths={} using nil) ->
   if not fs.isDir path
