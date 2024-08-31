@@ -361,9 +361,9 @@ do
 							if description then
 								local repr = param:_repr()
 								local padding = (' '):rep(longest_param_repr_len - #repr)
-								_with_0[#_with_0 + 1] = tostring(repr) .. tostring(padding) .. " " .. tostring(description)
+								_with_0[#_with_0 + 1] = "  " .. tostring(repr) .. tostring(padding) .. "  " .. tostring(description)
 							else
-								_with_0[#_with_0 + 1] = param:_repr()
+								_with_0[#_with_0 + 1] = "  " .. tostring(param:_repr())
 							end
 						end
 					end
@@ -390,9 +390,9 @@ do
 							if description then
 								local repr = flag:_long_repr()
 								local padding = (' '):rep(longest_flag_repr_len - #repr)
-								_with_0[#_with_0 + 1] = tostring(repr) .. tostring(padding) .. " " .. tostring(description)
+								_with_0[#_with_0 + 1] = "  " .. tostring(repr) .. tostring(padding) .. "  " .. tostring(description)
 							else
-								_with_0[#_with_0 + 1] = flag:_long_repr()
+								_with_0[#_with_0 + 1] = "  " .. tostring(flag:_long_repr())
 							end
 						end
 					end
@@ -508,7 +508,11 @@ do
 			if (self._short ~= nil) and (self._long ~= nil) then
 				return tostring(self._short) .. ", " .. tostring(self._long)
 			else
-				return self:_repr()
+				if (self._short ~= nil) then
+					return self._short
+				else
+					return "    " .. tostring(self._long)
+				end
 			end
 		end
 	}

@@ -209,9 +209,9 @@ export class ArgParser
           if description = param._description
             repr = param\_repr!
             padding = ' '\rep longest_param_repr_len - #repr
-            [] = "#{repr}#{padding} #{description}"
+            [] = "  #{repr}#{padding}  #{description}"
           else
-            [] = param\_repr!
+            [] = "  #{param\_repr!}"
 
       if #@_flags > 0
         [] = ''
@@ -222,9 +222,9 @@ export class ArgParser
           if description = flag._description
             repr = flag\_long_repr!
             padding = ' '\rep longest_flag_repr_len - #repr
-            [] = "#{repr}#{padding} #{description}"
+            [] = "  #{repr}#{padding}  #{description}"
           else
-            [] = flag\_long_repr!
+            [] = "  #{flag\_long_repr!}"
 
     table.concat lines, '\n'
 
@@ -277,8 +277,10 @@ export class Flag
   _long_repr: =>
     if @_short? and @_long?
       "#{@_short}, #{@_long}"
+    else if @_short?
+      @_short
     else
-      @_repr!
+      "    #{@_long}"
 
 export class Param
   new: (@_name) =>
