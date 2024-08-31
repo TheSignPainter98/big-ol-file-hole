@@ -202,7 +202,7 @@ export class ArgParser
 
       if #@_params > 0
         [] = ''
-        [] = 'Parameters'
+        [] = 'Parameters:'
 
         longest_param_repr_len = math.max unpack [ #p\_repr! for p in *@_params ]
         for param in *@_params
@@ -215,7 +215,7 @@ export class ArgParser
 
       if #@_flags > 0
         [] = ''
-        [] = 'Flags'
+        [] = 'Flags:'
 
         longest_flag_repr_len = math.max unpack [ #p\_long_repr! for p in *@_flags ]
         for flag in *@_sorted_flags!
@@ -231,8 +231,8 @@ export class ArgParser
   _sorted_flags: =>
     ret = [ flag for flag in *@_flags ]
     table.sort ret, (flag1, flag2) ->
-      name1 = flag1.name\match '[^-]*$'
-      name2 = flag2.name\match '[^-]*$'
+      name1 = flag1._name\match '[^-]*$'
+      name2 = flag2._name\match '[^-]*$'
       name1 <= name2
     ret
 

@@ -341,7 +341,7 @@ do
 				_with_0[#_with_0 + 1] = self:_usage_message()
 				if #self._params > 0 then
 					_with_0[#_with_0 + 1] = ''
-					_with_0[#_with_0 + 1] = 'Parameters'
+					_with_0[#_with_0 + 1] = 'Parameters:'
 					local longest_param_repr_len = math.max(unpack((function()
 						local _accum_0 = { }
 						local _len_0 = 1
@@ -370,7 +370,7 @@ do
 				end
 				if #self._flags > 0 then
 					_with_0[#_with_0 + 1] = ''
-					_with_0[#_with_0 + 1] = 'Flags'
+					_with_0[#_with_0 + 1] = 'Flags:'
 					local longest_flag_repr_len = math.max(unpack((function()
 						local _accum_0 = { }
 						local _len_0 = 1
@@ -415,8 +415,8 @@ do
 				ret = _accum_0
 			end
 			table.sort(ret, function(flag1, flag2)
-				local name1 = flag1.name:match('[^-]*$')
-				local name2 = flag2.name:match('[^-]*$')
+				local name1 = flag1._name:match('[^-]*$')
+				local name2 = flag2._name:match('[^-]*$')
 				return name1 <= name2
 			end)
 			return ret
