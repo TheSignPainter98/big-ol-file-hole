@@ -23,7 +23,7 @@ main = function(args)
 			return _with_1
 		end)())
 		_with_0:add_arg((function()
-			local _with_1 = Param('source')
+			local _with_1 = Flag('source')
 			_with_1:default('https://raw.githubusercontent.com/TheSignPainter98/big-ol-file-hole/master/cc-islands')
 			_with_1:description('where to get the files from')
 			return _with_1
