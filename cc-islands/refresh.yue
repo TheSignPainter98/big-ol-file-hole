@@ -67,7 +67,7 @@ get_file_content = (repo, path using nil) ->
   resp.close!
   if not content?
     error "received content nil for some reason"
-  content
+  content\readAll!
 
 log = (message using quiet) ->
   if quiet

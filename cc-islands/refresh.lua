@@ -88,7 +88,7 @@ get_file_content = function(repo, path)
 	if not (content ~= nil) then
 		error("received content nil for some reason")
 	end
-	return content
+	return content:readAll()
 end
 log = function(message)
 	if quiet then
