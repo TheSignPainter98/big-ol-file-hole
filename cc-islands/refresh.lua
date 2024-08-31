@@ -49,7 +49,14 @@ main = function(args)
 			any_failed = true
 			goto _continue_0
 		end
-		print("got file content: '" .. tostring(file_content) .. "'")
+		assert('string' == type(file_content))
+		print("got " .. tostring(#file_content) .. " bytes")
+		local file = fs.open(path, 'w')
+		if not (file ~= nil) then
+			error("cannot write to " .. tostring(path))
+		end
+		file:write(file_content)
+		file:close()
 		::_continue_0::
 	end
 	if not any_failed then

@@ -31,13 +31,15 @@ main = (args) ->
       log err
       any_failed = true
       continue
-    print "got file content: '#{file_content}'"
-    -- file = fs.open path, 'w'
-    -- if not file?
-    --   error "cannot write to #{path}"
-    -- with file
-    --   \write file_content
-    --   \close!
+
+    assert 'string' == type file_content
+    print "got #{#file_content} bytes"
+    file = fs.open path, 'w'
+    if not file?
+      error "cannot write to #{path}"
+    with file
+      \write file_content
+      \close!
 
   if not any_failed
     log 'SUCCESS'
