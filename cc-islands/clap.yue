@@ -91,12 +91,25 @@ export class ArgParser
           flag_arg = args[i]
           if not flag_arg?
             return nil, "flag #{arg} expected an argument"
-          flag_arg
+
+          if transform = flag._transform
+            transformed, err = transform flag_arg
+            if err?
+              return nil, "cannot parse '#{flag_arg}': #{err}"
+            transformed
+          else
+            flag_arg
       else
         param = @_params[curr_param]
         if not param
           return nil, "unexpected parameter #{arg}"
-        ret[param._name] = arg
+        ret[param._name] = if transform = param._transform
+          transformed, err = transform arg
+          if err?
+            return nil, "failed to parse #{arg}: #{err}"
+          transformed
+        else
+          arg
         curr_param += 1
 
     if ret._usage
@@ -190,7 +203,6 @@ export class ArgParser
       [] = ''
       [] = @_usage_message!
 
-
       if #@_params > 0
         [] = ''
         [] = 'Parameters'
@@ -234,6 +246,7 @@ export class Flag
     @_long = '--' .. @_name\gsub ' ', '-'
     @_required = false
     @_description = nil
+    @_transform = nil
 
   dest: (@_name) => @
   short: (@_short) => @
@@ -242,6 +255,7 @@ export class Flag
     @_required = true
     @
   description: (@_description) => @
+  transform: (@_transform) => @
 
   takes_param: (@_default=nil) =>
     @_takes_param = true
@@ -261,11 +275,13 @@ export class Param
     @_arg_name = nil
     @_required = true
     @_description = nil
+    @_transform = nil
 
   arg_name: (@_arg_name) => @
   default: (@_default) =>
     @_required = false
     @
   description: (@_description) => @
+  transform: (@_transform) => @
 
   _repr: => @_arg_name or @_name

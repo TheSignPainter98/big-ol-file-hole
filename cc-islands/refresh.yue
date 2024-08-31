@@ -21,7 +21,29 @@ main = (args) ->
   print "quiet: #{args.quiet}"
   print "source: #{args.source}"
 
-get_file = (path using nil) ->
+  for path in *get_paths '.'
+    file_content, err = get_file_content path
+    if err?
+      error err
+    with fs.open path, 'w+'
+      \write file_content
+      \close!
+
+get_paths = (path, stack={""}, paths={}) ->
+  if not fs.isDir path
+    error "get_paths must be called with a directory, got #{path}"
+
+  for child in *fs.list path
+    child_path = "#{stack[#stack]}/#{child}"
+    if fs.isDir child_path
+      stack[] = child_path
+      get_paths child, stack, paths
+      stack[] = nil
+    else
+      paths[] = child_path
+  paths
+
+get_file_content = (path using nil) ->
   url = "#{REPO}/#{path}"
   ok, err = http.checkUrl url
   if not ok

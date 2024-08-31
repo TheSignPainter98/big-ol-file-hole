@@ -159,14 +159,36 @@ do
 						if not (flag_arg ~= nil) then
 							return nil, "flag " .. tostring(arg) .. " expected an argument"
 						end
-						ret[flag._name] = flag_arg
+						do
+							local transform = flag._transform
+							if transform then
+								local transformed, err = transform(flag_arg)
+								if (err ~= nil) then
+									return nil, "cannot parse '" .. tostring(flag_arg) .. "': " .. tostring(err)
+								end
+								ret[flag._name] = transformed
+							else
+								ret[flag._name] = flag_arg
+							end
+						end
 					end
 				else
 					local param = self._params[curr_param]
 					if not param then
 						return nil, "unexpected parameter " .. tostring(arg)
 					end
-					ret[param._name] = arg
+					do
+						local transform = param._transform
+						if transform then
+							local transformed, err = transform(arg)
+							if (err ~= nil) then
+								return nil, "failed to parse " .. tostring(arg) .. ": " .. tostring(err)
+							end
+							ret[param._name] = transformed
+						else
+							ret[param._name] = arg
+						end
+					end
 					curr_param = curr_param + 1
 				end
 			end
@@ -453,6 +475,10 @@ do
 			self._description = _description
 			return self
 		end,
+		transform = function(self, _transform)
+			self._transform = _transform
+			return self
+		end,
 		takes_param = function(self, _default)
 			if _default == nil then
 				_default = nil
@@ -489,6 +515,7 @@ do
 			self._long = '--' .. self._name:gsub(' ', '-')
 			self._required = false
 			self._description = nil
+			self._transform = nil
 		end,
 		__base = _base_0,
 		__name = "Flag"
@@ -520,6 +547,10 @@ do
 			self._description = _description
 			return self
 		end,
+		transform = function(self, _transform)
+			self._transform = _transform
+			return self
+		end,
 		_repr = function(self)
 			return self._arg_name or self._name
 		end
@@ -533,6 +564,7 @@ do
 			self._arg_name = nil
 			self._required = true
 			self._description = nil
+			self._transform = nil
 		end,
 		__base = _base_0,
 		__name = "Param"

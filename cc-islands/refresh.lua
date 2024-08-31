@@ -1,4 +1,4 @@
-local quiet, main, get_file, log
+local quiet, main, get_paths, get_file_content, log
 local ArgParser, Flag, Param
 do
 	local _obj_0 = require('clap')
@@ -31,9 +31,48 @@ main = function(args)
 	end
 	quiet = args.quiet
 	print("quiet: " .. tostring(args.quiet))
-	return print("source: " .. tostring(args.source))
+	print("source: " .. tostring(args.source))
+	local _list_0 = get_paths('.')
+	for _index_0 = 1, #_list_0 do
+		local path = _list_0[_index_0]
+		local file_content, err = get_file_content(path)
+		if (err ~= nil) then
+			error(err)
+		end
+		do
+			local _with_0 = fs.open(path, 'w+')
+			_with_0:write(file_content)
+			_with_0:close()
+		end
+	end
 end
-get_file = function(path)
+get_paths = function(path, stack, paths)
+	if stack == nil then
+		stack = {
+			""
+		}
+	end
+	if paths == nil then
+		paths = { }
+	end
+	if not fs.isDir(path) then
+		error("get_paths must be called with a directory, got " .. tostring(path))
+	end
+	local _list_0 = fs.list(path)
+	for _index_0 = 1, #_list_0 do
+		local child = _list_0[_index_0]
+		local child_path = tostring(stack[#stack]) .. "/" .. tostring(child)
+		if fs.isDir(child_path) then
+			stack[#stack + 1] = child_path
+			get_paths(child, stack, paths)
+			stack[#stack + 1] = nil
+		else
+			paths[#paths + 1] = child_path
+		end
+	end
+	return paths
+end
+get_file_content = function(path)
 	local url = tostring(REPO) .. "/" .. tostring(path)
 	local ok, err = http.checkUrl(url)
 	if not ok then
