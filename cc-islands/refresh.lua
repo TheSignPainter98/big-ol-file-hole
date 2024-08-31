@@ -18,7 +18,7 @@ main = function(args)
 		end)())
 		_with_0:add_arg((function()
 			local _with_1 = Param('source')
-			_with_1:default('github.com/TheSignPainter98/big-ol-file-hole')
+			_with_1:default('https://github.com/TheSignPainter98/big-ol-file-hole')
 			_with_1:description('where to get the files from')
 			return _with_1
 		end)())
@@ -80,12 +80,12 @@ get_file_content = function(repo, path)
 	local url = tostring(repo) .. "/" .. tostring(path)
 	local ok, err = http.checkURL(url)
 	if not ok then
-		return err
+		return nil, err
 	end
 	log("downloading " .. tostring(url) .. "...")
 	local resp = http.get(url)
 	if not (response ~= nil) then
-		return "failed"
+		return nil, "failed"
 	end
 	log('success')
 	local content = resp:readAll()
@@ -93,7 +93,7 @@ get_file_content = function(repo, path)
 	if not (content ~= nil) then
 		error("received content nil for some reason")
 	end
-	return content
+	return content, nil
 end
 log = function(message)
 	if quiet then
