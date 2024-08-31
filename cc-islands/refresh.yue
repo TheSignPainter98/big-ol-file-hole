@@ -48,7 +48,7 @@ get_paths = (path, paths={} using nil) ->
 
 get_file_content = (repo, path using nil) ->
   url = "#{repo}/#{path}"
-  ok, err = http.checkUrl url
+  ok, err = http.checkURL url
   if not ok
     return err
 

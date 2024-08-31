@@ -72,7 +72,7 @@ get_paths = function(path, paths)
 end
 get_file_content = function(repo, path)
 	local url = tostring(repo) .. "/" .. tostring(path)
-	local ok, err = http.checkUrl(url)
+	local ok, err = http.checkURL(url)
 	if not ok then
 		return err
 	end
