@@ -37,15 +37,12 @@ main = function(args)
 		log("downloading " .. tostring(path) .. "...")
 		local file_content, err = get_file_content(args.source, path)
 		if (err ~= nil) then
-			error(err)
+			log(err)
+			goto _continue_0
 		end
 		log("writing content to " .. tostring(path) .. "...")
-		local file = fs.open(path, 'w')
-		if not (file ~= nil) then
-			error("cannot write to " .. tostring(path))
-		end
-		file:write(file_content)
-		file:close()
+		print(file_content)
+		::_continue_0::
 	end
 	return log('success')
 end

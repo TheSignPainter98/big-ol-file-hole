@@ -24,14 +24,16 @@ main = (args) ->
     log "downloading #{path}..."
     file_content, err = get_file_content args.source, path
     if err?
-      error err
+      log err
+      continue
     log "writing content to #{path}..."
-    file = fs.open path, 'w'
-    if not file?
-      error "cannot write to #{path}"
-    with file
-      \write file_content
-      \close!
+    print file_content
+    -- file = fs.open path, 'w'
+    -- if not file?
+    --   error "cannot write to #{path}"
+    -- with file
+    --   \write file_content
+    --   \close!
 
   log 'success'
 
