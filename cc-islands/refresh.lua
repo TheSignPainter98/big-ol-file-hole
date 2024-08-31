@@ -89,7 +89,7 @@ get_file_content = function(repo, path)
 	end
 	log('success')
 	local content = resp:readAll()
-	resp.close()
+	resp:close()
 	if not (content ~= nil) then
 		error("received content nil for some reason")
 	end
