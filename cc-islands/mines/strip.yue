@@ -1,0 +1,13 @@
+import yield from coroutine
+import Vector from require '..linalg'
+
+STRIP_GAP = 4
+
+export waypoints = => coroutine.wrap ->
+  distance = 0
+  while true
+    distance += STRIP_GAP
+    yield Vector { distance, 0 }
+    yield Vector { distance, STRIP_GAP }
+    yield Vector { distance, -STRIP_GAP }
+    yield Vector { distance, 0 }

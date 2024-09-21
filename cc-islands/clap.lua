@@ -415,9 +415,9 @@ do
 				ret = _accum_0
 			end
 			table.sort(ret, function(flag1, flag2)
-				local name1 = flag1._name:match('[^-]*$')
-				local name2 = flag2._name:match('[^-]*$')
-				return name1 <= name2
+				local name1 = (flag1._short or flag1._long):match('[^-]+$')
+				local name2 = (flag2._short or flag2._long):match('[^-]+$')
+				return name1 < name2
 			end)
 			return ret
 		end,

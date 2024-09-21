@@ -1,0 +1,20 @@
+import yield from coroutine
+import Vector, Matrix from require '..linalg'
+
+RING_GAP = 4
+ROTATE_LEFT = Matrix::Rotate2d -math.pi / 2
+ROTATE_RIGHT = Matrix::Rotate2d math.pi / 2
+
+export waypoints = => coroutine.wrap ->
+  yield Vector { RING_GAP, 0 }
+
+  radius = 0
+  rotation = Matrix::Identity 2
+  while true
+    radius += RING_GAP
+    for i = 1, 4
+      yield rotation * Vector { radius, RING_GAP + radius }
+      yield rotation * Vector { radius, -radius }
+      rotation = ROTATE_LEFT * rotation
+    yield rotation * Vector { radius, RING_GAP + radius }
+    rotation = ROTATE_RIGHT * rotation

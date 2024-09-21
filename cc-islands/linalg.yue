@@ -1,0 +1,235 @@
+local *
+
+type = do
+  old_type = _G.type
+  (obj) -> (obj.<>?.__class?.__name) or old_type obj
+
+export class Matrix
+  new: (rows) =>
+    if 'table' != type rows
+      error "expected table, got #{type rows}"
+    if #rows == 0
+      error "cannot create matrix with no rows"
+
+    local num_columns
+    sanitised_rows = with {}
+      for row in *rows
+        row = switch type row
+          when 'table'
+            row
+          when @@__name
+            row\to_vector_content!
+          else
+            error "expected table, got #{type row}"
+
+        if not num_columns?
+          num_columns = #row
+        else if #row != num_columns
+          error "expected row with #{num_columns} columns, but got #{#row} columns"
+
+        [] = row
+    @_rows = sanitised_rows
+    @num_rows = #sanitised_rows
+    @num_columns = num_columns
+
+  to_vector_content: =>
+    if not @is_vector!
+      error "matrix rows must be tables or vectors"
+    [ row[1] for row in *@_rows ]
+
+  is_vector: => @num_rows == 1
+
+  x: =>
+    if not @is_vector!
+      error "can only get the X coordinate of 1xN matrices"
+    @to_vector_content[1]
+  y: =>
+    if not @is_vector!
+      error "can only get the Y coordinate of 1xN matrices"
+    @to_vector_content[2]
+  z: =>
+    if not @is_vector!
+      error "can only get the Z coordinate of 1xN matrices"
+    @to_vector_content[3]
+
+  dot: (other) =>
+    if @@__name != type other
+      error "cannot dot-product #{type @} with #{type other}"
+    if @num_rows != 1 or other.num_rows != 1
+      error "cannot dot-product matricies larger than 1xN"
+    if @num_columns != other.num_columns
+      error "cannot dot-product different-dimension vectors"
+
+    sum = 0
+    for i = 1, @_dimension
+      sum += @_entries[i] * other._entries[i]
+    sum
+
+  vector_dim: =>
+    if @num_columns != 1
+      error "cannot get length of matricies larger than 1xN"
+    @num_rows
+
+  _dim_repr: => "#{@num_rows}x#{@num_columns}"
+
+  __tostring: =>
+    vec_tostring = (vec) -> "[#{table.concat [tostring elem for elem in *vec], ', '}]"
+    "[\n\t#{table.concat [ vec_tostring entry for entry in *@_rows ], ',\n\t'},\n]"
+
+  __index: (index) =>
+    mv = @.<>[index]
+    if mv?
+      return mv
+
+    if 'number' != type index
+      error "cannot index #{type @} with #{type index} (got #{index})"
+    @_rows[index]
+
+  -- __len: =>
+  --   if @num_rows != 1
+  --     error "length is only defined on 1xN matrices"
+  --   error "len of #{@} is #{@num_columns}"
+  --   @num_columns
+
+  __eq: (other) =>
+    if (type @) != type other
+      return false
+    if @num_rows != other.num_rows or @num_columns != other.num_columns
+      return false
+    for i = 1, @num_rows
+      for j = 1, @num_columns
+        if @[i][j] != other[i][j]
+          return false
+    true
+
+  __unm: => @ * -1
+
+  __add: (other) =>
+    if @@__name != type other
+      error "cannot add #{@@__name} and #{type other}"
+    if @num_rows != other.num_rows or @num_columns != other.num_columns
+      error "cannot add matricies with mismatched dimensions got #{@_dim_repr!} and #{other\_dim_repr!}"
+
+    Matrix [ [ @[i][j] + other[i][j] for j = 1, @num_columns ] for i = 1, @num_rows ]
+
+  __sub: (other) =>
+    if @@__name != type other
+      error "cannot subtract #{@@__name} and #{type other}"
+    if @num_rows != other.num_rows or @num_columns != other.num_columns
+      error "cannot subtract matricies with mismatched dimensions"
+
+    Matrix [ [ @[i][j] - other[i][j] for j = 1, @num_columns ] for i = 1, @num_rows ]
+
+  __mul: (other) =>
+    self_type = type @
+    other_type = type other
+
+    if self_type == 'number' or other_type == 'number'
+      if self_type == 'number'
+        @, other = other, @
+      return Matrix [ [ column_value * other for column_value in *row ] for row in *@_rows ]
+
+    if self_type == 'Vector'
+      @ = Matrix { @ }
+    else if other_type == 'Vector'
+      other = Matrix { other }
+    if (type @) != @@__name or (type other) != @@__name
+      error "cannot multiply a #{self_type} by a #{other_type}"
+
+    other_t = other\transpose!
+    dot = (v1, v2) ->
+      sum = 0
+      for i = 1, #v1
+        sum += v1[i] * v2[i]
+      sum
+    Matrix [ [ dot @[i], other_t[j] for j = 1, other_t.num_rows ] for i = 1, @num_columns ]
+
+  transpose: =>
+    Matrix [ [ @_rows[i][j] for i = 1, @num_rows ] for j = 1, @num_columns ]
+
+  __div: (other) =>
+    if @@__name != type @
+      error "cannot divide by #{type @}"
+    if 'number' != type other
+      error "cannot divide #{type @} by #{type other}"
+
+    Matrix [ [ column_value / other for column_value in *row ] for row in *@_rows ]
+
+  magnitude: =>
+    if @num_rows != 1
+      error "can only get the magnitude of 1xN matricies, got #{@_dim_repr!}"
+
+    sum_of_squares = 0
+    for dim in *@_rows[1]
+      sum_of_squares += dim * dim
+    math.sqrt sum_of_squares
+
+  @Rotate2d: (radians) =>
+    Matrix
+      * { (math.cos radians), -math.sin radians }
+      * { (math.sin radians),  math.cos radians }
+
+  @Diagonal: (vector) =>
+    vector = vector\to_vector_content!
+    Matrix [ [ (if i == j then vector[i] else 0) for i = 1, #vector ] for j = 1, #vector ]
+
+  @Identity: (dim) =>
+    @Diagonal Vector [ 1 for _ = 1, dim ]
+
+export Vector = (entries) -> Matrix [ {entry} for entry in *entries ]
+
+export X2 = Vector { 1, 0 }
+export Z2 = Vector { 0, 1 }
+
+-- main = ->
+--   print '===== VECTORS ====='
+--
+--   v1 = Vector { 1, 2, -3 }
+--   v2 = Vector { 4, 5, 6 }
+--   print v1
+--   print v2
+--   print v1 + v2
+--   print v1 - v2
+--
+--   print v1\magnitude!
+--   assert (Vector { (math.sqrt 2) / 2, (math.sqrt 2) / 2, 0 })\magnitude! == 1
+--
+--   v3 = Vector {1, -1}
+--   try
+--     print v1 + v3
+--   catch err
+--     print "v1 + v3: #{err}"
+--
+--   print 2 * v1
+--   print v1 * -1
+--   print -v1
+--
+--   print v1 / 3
+--   print v1 == Vector { 1, 2, -3 }
+--   print v1 == v3
+--
+--   print '===== MATRICES ====='
+--   m1 = Matrix { v1, v2, v1 }
+--   m2 = Matrix { v2, v1, v1 }
+--   print m1
+--   print m2
+--   print m1 + m2
+--
+--   r1 = Matrix::Rotate2d math.pi
+--   print r1
+--   print r1\transpose!
+--   print r1 * r1
+--
+--   s1 = Matrix
+--     * { -1,  1 }
+--     * {  1, -1 }
+--   m3 = Matrix
+--     * { 2, 3 }
+--     * { 5, 7 }
+--   print s1
+--   print m3
+--   -- print m3\transpose!
+--   print s1 * m3
+--   print m3 * s1
+--
+-- main!

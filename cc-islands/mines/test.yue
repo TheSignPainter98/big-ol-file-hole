@@ -1,0 +1,15 @@
+import yield from coroutine
+import Vector from require '..linalg'
+
+-- export poses = (miku) ->
+--   -- print miku
+--   -- print miku.<name>
+--   ret = coroutine.wrap ->
+--     yield "hello!"
+--     yield "yield asdf"
+--   print ret!
+--   ret
+
+export waypoints = => coroutine.wrap ->
+  yield Vector { 10, 0, 0 }
+  yield Vector {  0, 0, 0 }

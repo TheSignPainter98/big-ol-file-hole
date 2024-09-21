@@ -1,0 +1,20 @@
+export move_towards = (target, opts={}) ->
+  { resolution_order='nearest' } = opts
+
+  switch resolution_order
+    when 'xyz', 'xzy', 'yxz', 'yzx', 'zxy', 'zyx'
+      move_towards_orthogonal target, opts
+    when 'nearest'
+      move_towards_direct target, opts
+    else
+      error 'unrecognised resolution order'
+
+move_towards_orthogonal = (target, opts) ->
+  { height=2 } = opts
+
+  print 'ortho', target, height, resolution_order
+
+move_towards_orthogonal = (target, opts) ->
+  { height=2 } = opts
+
+  print 'direct', target, height, resolution_order

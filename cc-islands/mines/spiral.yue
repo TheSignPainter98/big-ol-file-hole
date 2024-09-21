@@ -1,0 +1,15 @@
+import yield from coroutine
+import Vector, Matrix from require '..linalg'
+
+RING_GAP = 4
+
+export waypoints = => coroutine.wrap ->
+  radius = 0
+  while true
+    radius += 1
+    for i = 1, 4
+      yield Vector {  radius,     0,  radius }
+      yield Vector {  radius,     0, -radius }
+      yield Vector { -radius,     0, -radius }
+      yield Vector { -radius,     0,  radius }
+      yield Vector { -(radius+1), 0,  radius+1 }

@@ -231,9 +231,9 @@ export class ArgParser
   _sorted_flags: =>
     ret = [ flag for flag in *@_flags ]
     table.sort ret, (flag1, flag2) ->
-      name1 = flag1._name\match '[^-]*$'
-      name2 = flag2._name\match '[^-]*$'
-      name1 <= name2
+      name1 = (flag1._short or flag1._long)\match '[^-]+$'
+      name2 = (flag2._short or flag2._long)\match '[^-]+$'
+      name1 < name2
     ret
 
   _version_message: =>

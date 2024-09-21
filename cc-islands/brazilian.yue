@@ -1,0 +1,184 @@
+local *
+
+import ArgParser, Flag, Param from require 'clap'
+import Vector from require 'linalg'
+
+verbose = false
+
+main = (args) ->
+  arg_parser = with ArgParser 'brazilian'
+    \version '0.1'
+    \description 'the sequel to miku miner, always trying to escape'
+    \add_arg with Flag 'verbose'
+      \description 'output verbosely'
+    \add_arg with Param 'pattern'
+      \arg_name 'file'
+      \description 'Lua mining pattern script'
+  args, ok = arg_parser\parse args
+  if not ok
+    return
+  verbose = args.verbose
+
+  pattern = require args.pattern
+  if 'table' != type pattern
+    error "#{args.pattern} must return a table (got #{type pattern})"
+  import waypoints from require args.pattern
+  if not waypoints?
+    error "#{args.pattern} does have waypoints field"
+  with Miku!
+    \run waypoints
+
+class Miku
+  new: (opts={}) =>
+    {
+      inv_size: @inv_size=16,
+      current_position: @current_position=Vector { 0, 0, 0 },
+      current_direction: @current_direction=Vector { 1, 0 },
+    } = opts
+
+  run: (waypoints) =>
+    print 'starting sequence'
+    for waypoint in waypoints @
+      print "got waypoint #{waypoint}"
+      while @approach waypoint
+        debug "approaching #{waypoint}"
+    print 'end of waypoints.'
+
+  approach: (waypoint) =>
+    approach_dim, approach_sign = do
+      delta = waypoint - @current_position
+      if delta\magnitude! == 0
+        return false
+
+      deltas =
+        * { 'x', delta\x! }
+        * { 'y', delta\y! }
+        * { 'z', delta\z! }
+
+      approach_dim = nil
+      max_dim_delta = 0
+      for { dim, dim_delta } in *deltas
+        if max_dim_delta < dim_delta
+          max_dim_delta = dim_delta
+          approach_dim = dim
+      approach_sign = max_dim_delta / math.abs max_dim_delta
+      approach_dim, approach_sign
+
+    if approach_dim == 'y'
+      if approach_sign > 0
+        @move_up!
+      else
+        @move_down!
+      return true
+
+    approach_vec, other_vec = switch approach_dim
+      when 'x'
+        linalg.X2, linalg.Z2
+      when 'z'
+        linalg.Z2, linalg.X2
+      else
+        error "invalid horizontal approach dimension #{dim}"
+
+    -- Rotate to correct direction
+    approach_vec_dot = @current_direction\dot approach_vec
+    if approach_vec_dot < 0
+      @turn_left!
+      @turn_left!
+    if approach_vec_dot == 0
+      other_vec_dot = @current_direction\dot other_vec
+      if other_vec_dot < 0
+        @turn_left!
+      else
+        @turn_right!
+
+    @move_ahead!
+    true
+
+  move_up: =>
+    must 'dig up', turtle.digUp
+    must 'move up', turtle.up
+    @current_position += Vector { 0, 1, 0 }
+
+  move_down: =>
+    must 'dig down', turtle.digDown
+    must 'move down', turtle.down
+    @current_position += Vector { 0, -1, 0 }
+
+  move_ahead: =>
+    must 'dig ahead', turtle.dig
+    must 'move ahead', turtle.forward
+    { dx, dz } = @current_direction\to_vector_content!
+    @current_position += Vector { dx, 0, dz }
+
+  turn_left: =>
+    must 'turn left', turtle.turnLeft
+    rotation = Matrix
+      * {  0, 1 }
+      * { -1, 0 }
+    @current_direction = rotation * @current_direction
+
+  turn_right: =>
+    must 'turn left', turtle.turnLeft
+    rotation = Matrix
+      * { 0, -1 }
+      * { 1,  0 }
+    @current_direction = rotation * @current_direction
+
+  fuel_low: =>
+    fuel_level = turtle.getFuelLevel!
+    fuel_limit = turtle.getFuelLimit!
+    fuel_level / fuel_limit <= 0.2
+
+  consume_fuel: =>
+    prev_selected = turtle.getSelectedSlot!
+
+    success = false
+    for i = 1, @inv_size
+      turtle.select i
+      if turtle.refuel!
+        success = true
+        break
+
+    turtle.select prev_selected
+    success
+
+  store_items: =>
+    prev_selected = turtle.getSelectedSlot!
+
+    RESERVE_FUEL_SLOT = 1
+    if not @has_fuel_at RESERVE_FUEL_SLOT
+      for i = 2, @inv_size
+        if @has_fuel_at i
+          turtle.select i
+          turtle.transferTo RESERVE_FUEL_SLOT
+          break
+
+    if @fuel_low!
+      if not @consume_fuel!
+        alert "I'm so hungry..."
+
+    for i = 2, @inv_size
+      turtle.select i
+      turtle.dropDown!
+
+    turtle.select prev_selected
+
+  has_fuel_at: (slot_index) =>
+    details = turtle.getItemDetail slot_index
+    error table.concat [ key for key, _ in pairs details ]
+    true
+
+alert = (...) ->
+  message = table.concat {...}, ' '
+  print "ALERT: #{message}" -- TODO(kcza): message discord or something
+
+debug = (...) ->
+  if not verbose
+    return
+  print table.concat {...}, ' '
+
+must = (name, action) ->
+  if not action!
+    error "cannot #{name}"
+
+main {...}

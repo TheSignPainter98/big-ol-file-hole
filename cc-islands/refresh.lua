@@ -10,7 +10,7 @@ main = function(args)
 	local arg_parser
 	do
 		local _with_0 = ArgParser('refresh')
-		_with_0:version('0.1')
+		_with_0:version('1.0')
 		_with_0:description('a downloader of up-to-date files')
 		_with_0:add_arg((function()
 			local _with_1 = Flag('quiet')

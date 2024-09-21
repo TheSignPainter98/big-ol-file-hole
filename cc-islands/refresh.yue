@@ -7,7 +7,7 @@ verbose = false
 
 main = (args) ->
   arg_parser = with ArgParser 'refresh'
-    \version '0.1'
+    \version '1.0'
     \description 'a downloader of up-to-date files'
     \add_arg with Flag 'quiet'
       \description 'output quietly'
