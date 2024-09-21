@@ -16,12 +16,12 @@ main = function(args)
 		local _with_0 = ArgParser('brazilian')
 		_with_0:version('0.1')
 		_with_0:description('the sequel to miku miner, always trying to escape')
-		_with_0:add_arg((function()
+		_with_0:add((function()
 			local _with_1 = Flag('verbose')
 			_with_1:description('output verbosely')
 			return _with_1
 		end)())
-		_with_0:add_arg((function()
+		_with_0:add((function()
 			local _with_1 = Param('pattern')
 			_with_1:arg_name('file')
 			_with_1:description('Lua mining pattern script')
@@ -55,29 +55,41 @@ do
 	local _class_0
 	local _base_0 = {
 		run = function(self, waypoints)
+			print('starting sequence')
 			for waypoint in waypoints(self) do
 				print("got waypoint " .. tostring(waypoint))
 				while self:approach(waypoint) do
 					debug("approaching " .. tostring(waypoint))
 				end
 			end
-			return print('sequence done')
+			return print('end of waypoints.')
 		end,
 		approach = function(self, waypoint)
 			local approach_dim, approach_sign
 			do
-				local delta = self.current_position - waypoint
+				local delta = waypoint - self.current_position
 				if delta:magnitude() == 0 then
 					return false
 				end
 				local deltas = {
-					x = delta:x(),
-					y = delta:y(),
-					z = delta:z()
+					{
+						'x',
+						delta:x()
+					},
+					{
+						'y',
+						delta:y()
+					},
+					{
+						'z',
+						delta:z()
+					}
 				}
 				approach_dim = nil
 				local max_dim_delta = 0
-				for dim, dim_delta in pairs(deltas) do
+				for _index_0 = 1, #deltas do
+					local _des_0 = deltas[_index_0]
+					local dim, dim_delta = _des_0[1], _des_0[2]
 					if max_dim_delta < dim_delta then
 						max_dim_delta = dim_delta
 						approach_dim = dim
@@ -107,15 +119,13 @@ do
 				self:turn_left()
 				self:turn_left()
 			end
-			if approach_vec_dot ~= 0 then
-				self:move_ahead()
-				return true
-			end
-			local other_vec_dot = self.current_direction:dot(other_vec)
-			if other_vec_dot < 0 then
-				self:turn_left()
-			else
-				self:turn_right()
+			if approach_vec_dot == 0 then
+				local other_vec_dot = self.current_direction:dot(other_vec)
+				if other_vec_dot < 0 then
+					self:turn_left()
+				else
+					self:turn_right()
+				end
 			end
 			self:move_ahead()
 			return true

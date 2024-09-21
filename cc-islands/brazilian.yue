@@ -9,9 +9,9 @@ main = (args) ->
   arg_parser = with ArgParser 'brazilian'
     \version '0.1'
     \description 'the sequel to miku miner, always trying to escape'
-    \add_arg with Flag 'verbose'
+    \add with Flag 'verbose'
       \description 'output verbosely'
-    \add_arg with Param 'pattern'
+    \add with Param 'pattern'
       \arg_name 'file'
       \description 'Lua mining pattern script'
   args, ok = arg_parser\parse args

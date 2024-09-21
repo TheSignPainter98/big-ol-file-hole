@@ -1,67 +1,108 @@
 local *
 local Flag -- `local *` does not cover exports
 local Param -- `local *` does not cover exports
+local Subcommand -- `local *` does not cover exports
 
-EXIT = <tostring>: => "exit"
-HELP = <tostring>: => "show help"
-USAGE = <tostring>: => "show usage"
-VERSION =  <tostring>: => "show version"
+unpack = unpack ?? table.unpack
 
-export class ArgParser
+EXIT = <tostring>: => "<exit>"
+SELF = <tostring>: => '<self>'
+
+export class Flag
   new: (@_name) =>
+    @_takes_param = false
+    @_default = false
+    @_value_name = 'value'
+    @_short = '-' .. @_name\sub 1, 1
+    @_long = if #@_name > 1
+      '--' .. @_name\gsub ' ', '-'
+    else
+      nil
+    @_required = false
+    @_description = nil
+    @_options = nil
+    @_transform = nil
+
+  dest: (@_name) => @
+  short: (@_short) => @
+  long: (@_long) => @
+  required: =>
+    @_required = true
+    @
+  description: (@_description) => @
+  options: (@_options) => @
+  transform: (@_transform) => @
+
+  takes_param: () =>
+    @_takes_param = true
+    @
+  default: (@_default) =>
+    if 'boolean' == type @_default
+      error 'boolean default flag arguments not currently supported'
+    @takes_param!
+    @
+
+  value_name: (@_value_name) => @
+
+  _repr: => @_short or @_long
+  _long_repr: =>
+    if @_short? and @_long?
+      " #{@_short}, #{@_long}"
+    else if @_short?
+      " #{@_short}"
+    else
+      @_long
+      -- "    #{@_long}"
+
+export class Param
+  new: (@_name) =>
+    @_arg_name = nil
+    @_required = true
+    @_description = nil
+    @_options = nil
+    @_transform = nil
+
+  arg_name: (@_arg_name) => @
+  default: (@_default) =>
+    @_required = false
+    @
+  description: (@_description) => @
+  options: (@_options) => @
+  transform: (@_transform) => @
+
+  _repr: => @_arg_name or @_name
+
+export class Subcommand
+  new: (@_name) =>
+    @_dest = @_name
     @_version = nil
     @_flags = {}
     @_params = {}
+    @_subcommands = {}
     @_add_help = true
     @_description = nil
     @_auto_args_added = false
 
+  dest: (@_dest) => @
   version: (@_version) => @
-  add_arg: (arg) =>
+  add: (arg) =>
     arg_type = arg.<>?.__class?.__name
     switch arg_type
       when 'Flag'
         @_flags[] = arg
       when 'Param'
         @_params[] = arg
+      when 'Subcommand'
+        @_subcommands[] = arg
       else
         error "cannot use a #{type arg} as an arg"
-    @
-  add_param: (param) =>
-    param_type = param.<class>.__name
-    if param_type != 'Param'
-      error "expected Param, got a #{param_type ?? type param}"
-    @_params[] = param
     @
   no_help: =>
     @_add_help = false
     @
   description: (@_description) => @
 
-  parse: (args) =>
-    ret, err = @_parse args
-    if err?
-      switch err
-        when USAGE
-          print @_usage_message!
-        when HELP
-          print @_help_message!
-        when VERSION
-          print @_version_message!
-        else
-          print err
-          print @_usage_message!
-      return nil, false
-    ret, true
-
-  _parse: (args) =>
-    if not @_auto_args_added
-      @_add_auto_args!
-    @_auto_args_added = true
-
-    if err = @_validate!
-      return nil, err
-
+  _parse: (args, parents={}) =>
     ret = with {}
       for flag in *@_flags
         [flag._name] = flag._default
@@ -74,6 +115,8 @@ export class ArgParser
           [flag._short] = flag
         if flag._long
           [flag._long] = flag
+
+    subcommand_map = { sc._name, sc for sc in *@_subcommands }
 
     curr_param = 1
     i = 0
@@ -99,10 +142,7 @@ export class ArgParser
             transformed
           else
             flag_arg
-      else
-        param = @_params[curr_param]
-        if not param
-          return nil, "unexpected parameter #{arg}"
+      else if param = @_params[curr_param]
         ret[param._name] = if transform = param._transform
           transformed, err = transform arg
           if err?
@@ -111,41 +151,104 @@ export class ArgParser
         else
           arg
         curr_param += 1
+      else if command = subcommand_map[arg]
+        parents[] = @_name
+        subcommand_ret, err = command\_parse [ a for a in *args[i+1,] ], parents
+        if err?
+          return nil, err
+        ret[command._dest] = subcommand_ret
+        break
+      else
+        return nil, "unexpected argument '#{arg}'"
 
     if ret._usage
-      return nil, USAGE
-    if ret._help
-      return nil, HELP
+      print @_usage_message parents
+      return nil, EXIT
+    if help = ret._help
+      if help == true
+        print @_help_message parents
+        return nil, EXIT
+
+      if 'table' != type help
+        error "internal error: unexpected help type #{type help}"
+
+      if help.command == SELF
+        print @_help_message parents
+        return nil, EXIT
+      if sc = subcommand_map[help.command]
+        print sc\_help_message parents
+        return nil, EXIT
+      return nil, "no such subcommand '#{help}'"
     if ret._version
-      return nil, VERSION
+      print @_version_message parents
+      return nil, EXIT
 
     for flag in *@_flags
-      if flag._required and not ret[flag._name]
-        return nil, "flag #{flag\_repr!} required"
+      with flag
+        arg = flag[._name]
+        if not arg and ._required
+          return nil, "flag '#{\_repr!}' required"
+        if arg and ._options
+          ok = false
+          for option in *._options
+            if arg == option
+              ok = true
+              break
+          if not ok
+            return nil, "flag '#{\_repr!}' has incorrect value, got '#{arg}' but expected one of #{table.concat ._options, ', '}"
     for param in *@_params
-      if param._required and not ret[param._name]
-        return nil, "flag #{param\_repr!} required"
+      with param
+        arg = ret[._name]
+        if not arg and ._required
+          return nil, "argument '#{\_repr!}' required"
+        if arg and ._options
+          ok = false
+          for option in *._options
+            if arg == option
+              ok = true
+              break
+          if not ok
+            return nil, "argument '#{\_repr!}' has incorrect value, got '#{arg} but expected one of #{table.concat ._options, ', '}"
+    if #@_subcommands > 0
+      command_specified = false
+      for command in *@_subcommands
+        if ret[command._dest]?
+          command_specified = true
+          break
+      if not command_specified
+        return nil, "command required"
 
     ret, nil
 
   _add_auto_args: =>
     if @_add_help
-      @add_arg with Flag 'help'
-        \dest '_usage'
-        \description 'print short help'
-        \long nil
-      @add_arg with Flag 'help'
-        \dest '_help'
-        \description 'print long help'
-        \short nil
+      if #@_subcommands > 0
+        @add with Subcommand 'help'
+          \dest '_help'
+          \description 'print help and exit'
+          \add with Param 'command'
+            \description 'print help for the given command and exit'
+            \default SELF
+      else
+        @add with Flag 'help'
+          \dest '_usage'
+          \description 'print usage and exit'
+          \long nil
+        @add with Flag 'help'
+          \dest '_help'
+          \description 'print help and exit'
+          \short nil
 
     if @_version?
-      @add_arg with Flag 'version'
+      @add with Flag 'version'
         \dest '_version'
         \description 'print version'
         \short nil
 
-  _validate: =>
+  _validate_spec: =>
+    if #@_params > 0 and #@_subcommands > 0
+      return "cannot have both parameters and subcommands in command #{@_name}"
+
     flag_tags = with {}
       for flag in *@_flags
         if [flag._short] or [flag._long]
@@ -158,13 +261,29 @@ export class ArgParser
     arg_names = { flag._name, true for flag in *@_flags }
     for param in *@_params
       name = param._name
-      if arg_names[name]?
+      if arg_names[name]
         return "duplicate parameter name: #{name}"
       arg_names[name] = true
+    if #@_params > 1
+      error arg_names
+
+    for subcommand in *@_subcommands
+      name = subcommand._name
+      if arg_names[name]?
+        return "duplicate subcommand name: #{name}"
+      arg_names[name] = true
+
+      if err = subcommand\_validate_spec!
+        return err
+
     nil
 
-  _usage_message: =>
-    table.concat with {'Usage: ', @_name, ' '}
+  _usage_message: (parents={}) =>
+    parents_repr = if #parents > 0
+      (table.concat parents, ' ') .. ' '
+    else
+      ''
+    table.concat with {'Usage: ', parents_repr, @_name, ' '}
       first_arg = true
       for flag in *@_sorted_flags!
         if not first_arg
@@ -191,27 +310,49 @@ export class ArgParser
         if not param._required
           [] = ']'
 
-  _help_message: =>
-    usage_message = @_usage_message!
+      if #@_subcommands > 0
+        if not first_arg
+          [] = ' '
+        [] = '<command>'
+
+  _help_message: (parents={})=>
     lines = with {}
       if @_description?
-        [] = "#{@_name} - #{@_description}"
+        [] = table.concat with {}
+          [] = table.concat parents, ' '
+          if #parents > 0
+            [] = ' '
+          [] = "#{@_name} - #{@_description}"
 
       [] = ''
-      [] = @_usage_message!
+      [] = @_usage_message parents
+
+      if #@_subcommands > 0
+        [] = ''
+        [] = 'Commands:'
+
+        longest_subommand_repr_len = math.max unpack [ #sc\_repr! for sc in *@_subcommands ]
+        sorted_subcommands = [ sc for sc in *@_subcommands ]
+        for subcommand in *sorted_subcommands
+          repr = subcommand\_repr!
+          if description = subcommand._description
+            padding = ' '\rep longest_subommand_repr_len - #repr
+            [] = "  #{repr}#{padding}  #{description}"
+          else
+            [] = "  #{repr}"
 
       if #@_params > 0
         [] = ''
-        [] = 'Parameters:'
+        [] = 'Arguments:'
 
         longest_param_repr_len = math.max unpack [ #p\_repr! for p in *@_params ]
         for param in *@_params
+          repr = param\_repr!
           if description = param._description
-            repr = param\_repr!
             padding = ' '\rep longest_param_repr_len - #repr
-            [] = "  #{repr}#{padding}  #{description}"
+            [] = " #{repr}#{padding}  #{description}"
           else
-            [] = "  #{param\_repr!}"
+            [] = " #{repr}"
 
       if #@_flags > 0
         [] = ''
@@ -219,12 +360,12 @@ export class ArgParser
 
         longest_flag_repr_len = math.max unpack [ #p\_long_repr! for p in *@_flags ]
         for flag in *@_sorted_flags!
+          repr = flag\_long_repr!
           if description = flag._description
-            repr = flag\_long_repr!
             padding = ' '\rep longest_flag_repr_len - #repr
-            [] = "  #{repr}#{padding}  #{description}"
+            [] = " #{repr}#{padding}  #{description}"
           else
-            [] = "  #{flag\_long_repr!}"
+            [] = " #{repr}"
 
     table.concat lines, '\n'
 
@@ -236,64 +377,33 @@ export class ArgParser
       name1 < name2
     ret
 
-  _version_message: =>
-    parts = {@_name}
+  _version_message: (parents={}) =>
+    parts = {...parents, @_name}
     if @_version?
       parts[] = @_version
     table.concat parts, ' '
 
-export class Flag
-  new: (@_name) =>
-    @_takes_param = false
-    @_default = false
-    @_value_name = 'value'
-    @_short = '-' .. @_name\sub 1, 1
-    @_long = '--' .. @_name\gsub ' ', '-'
-    @_required = false
-    @_description = nil
-    @_transform = nil
+  _repr: => @_name
 
-  dest: (@_name) => @
-  short: (@_short) => @
-  long: (@_long) => @
-  required: =>
-    @_required = true
-    @
-  description: (@_description) => @
-  transform: (@_transform) => @
+export class ArgParser extends Subcommand
+  new: (@_name) => super @_name
 
-  takes_param: () =>
-    @_takes_param = true
-    @
-  default: (@_default) =>
-    if 'boolean' == type @_default
-      error 'boolean default flag arguments not currently supported'
-    @takes_param!
-    @
+  parse: (args) =>
+    if not @_auto_args_added
+      @_add_auto_args!
+      for subcommand in *@_subcommands
+        subcommand\_add_auto_args!
+    @_auto_args_added = true
 
-  value_name: (@_value_name) => @
+    if err = @_validate_spec!
+      print err
+      return nil, false
 
-  _repr: => @_short or @_long
-  _long_repr: =>
-    if @_short? and @_long?
-      "#{@_short}, #{@_long}"
-    else if @_short?
-      @_short
-    else
-      "    #{@_long}"
-
-export class Param
-  new: (@_name) =>
-    @_arg_name = nil
-    @_required = true
-    @_description = nil
-    @_transform = nil
-
-  arg_name: (@_arg_name) => @
-  default: (@_default) =>
-    @_required = false
-    @
-  description: (@_description) => @
-  transform: (@_transform) => @
-
-  _repr: => @_arg_name or @_name
+    ret, err = @_parse args
+    if err?
+      if err == EXIT
+        return nil, false
+      print err
+      print @_usage_message!
+      return nil, false
+    ret, true

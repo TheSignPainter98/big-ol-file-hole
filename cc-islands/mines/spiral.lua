@@ -6,35 +6,39 @@ do
 	Vector, Matrix = _obj_0.Vector, _obj_0.Matrix
 end
 local RING_GAP = 4
-local ROTATE_LEFT = Matrix:Rotate2d(-math.pi / 2)
-local ROTATE_RIGHT = Matrix:Rotate2d(math.pi / 2)
 local waypoints
 waypoints = function(self)
 	return coroutine.wrap(function()
-		yield(Vector({
-			RING_GAP,
-			0
-		}))
 		local radius = 0
-		local rotation = Matrix:Identity(2)
 		while true do
-			radius = radius + RING_GAP
+			radius = radius + 1
 			for i = 1, 4 do
-				yield(rotation * Vector({
+				yield(Vector({
 					radius,
-					RING_GAP + radius
+					0,
+					radius
 				}))
-				yield(rotation * Vector({
+				yield(Vector({
 					radius,
+					0,
 					-radius
 				}))
-				rotation = ROTATE_LEFT * rotation
+				yield(Vector({
+					-radius,
+					0,
+					-radius
+				}))
+				yield(Vector({
+					-radius,
+					0,
+					radius
+				}))
+				yield(Vector({
+					-(radius + 1),
+					0,
+					radius + 1
+				}))
 			end
-			yield(rotation * Vector({
-				radius,
-				RING_GAP + radius
-			}))
-			rotation = ROTATE_RIGHT * rotation
 		end
 	end)
 end
