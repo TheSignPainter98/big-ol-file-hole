@@ -1,0 +1,149 @@
+local *
+
+import Param, Subcommand from require 'clap'
+import 'majo.config'
+
+IGNORE = <tostring>: => '<ignore>'
+
+export is_active = (args) -> args.start?
+export register_args = (parser) -> with parser
+  \add with Subcommand 'start'
+    \description 'start a majo node'
+    \add with Param 'type'
+      \options
+        * 'factory'
+        * 'marshal'
+      \default 'factory'
+
+export run = (args) ->
+  switch args.start.type
+    when 'factory'
+      run_factory args
+    when 'marshal'
+      error 'todo'
+    else
+      error "internal error: unrecognised node type #{args.start.type}"
+
+class Factory
+  new: =>
+    @input_starvation_threshold = config.input_starvation_threshold!
+    -- @output_ready_threshold = config.output_ready_threshold!
+
+  run: =>
+    modem = peripheral.find 'modem'
+    if not modem?
+      error 'cannot find modem'
+    rednet.open modem
+
+    while true
+      sleep 1
+      required_resources = @required_resources!
+      if #required_resources > 0
+        for resource in *required_resources
+          train_id, err = @negotiate_delivery_of resource
+          if err?
+            print err
+            continue
+          print "train #{train_id} en-route with #{resource}"
+
+  require_resources: => { 'minecraft:dirt' } -- TODO(kcza): detect me!
+
+  on_low_resource: (resource) =>
+    request = ResourceSupplierRequest resource
+    rednet.broadcast request, request\protocol!
+
+    supplier_id, message = rednet.receive ResourceSupplierResponse::protocol!, 10
+    if not supplier_id?
+      return nil, "no suppliers found for #{resource}"
+    resource_supplier_response, ok = ResourceSupplierResponse::from message
+    if not ok
+      return nil, "unexpected message #{message}, expected #{ResourceSupplierResponse::protocol!}"
+    if resource_supplier_response.resource != resource
+      return nil, IGNORE
+
+    ok = rednet.send supplier_id, ResourceDeliveryRequest resource
+    if not ok
+      return nil, "failed to send #{ResourceDeliveryRequest::protocol!}"
+
+    supplier_id, message = rednet.receive ResourceDeliveryResponse::protocol!, 60
+    if not supplier_id
+      return nil, "supplier did not report schedule of delivery for #{resource}"
+    resource_delivery_response, ok = ResourceDeliveryResponse::from message
+    if not ok
+      return nil, "unexpected message #{message}, expected #{ResourceDeliveryResponse::protocol!}"
+    if resource_delivery_response.resource != resource
+      return nil, IGNORE
+    resource_supplier_response.train_id, nil
+
+  on_supplier_request: =>
+    -- TODO(kcza): be lazy, await multiple!
+    requester_id, message = rednet.receive ResourceSupplierRequest::protocol!
+    if not requester_id?
+      -- TODO(kcza): sleep?
+      -- TODO(kcza): actually ignore
+      return nil, IGNORE
+    resource_supplier_request, ok = ResourceSupplierRequest::from message
+    if not ok
+      return nil, "unexpected message #{message}, expected #{ResourceSupplierRequest::protocol!}"
+
+    if not @is_available_here resource_supplier_request.resource
+      return nil, IGNORE
+
+    ok = rednet.send requester_id, ResourceSupplierResponse resource
+    if not ok
+      return nil, "failed to send #{ResourceSupplierResponse::protocol!}"
+
+  on_resource_request: (resource) =>
+    error 'todo'
+    -- TODO(kcza): check *available* trains here first (i.e. must not be promised to another!)
+
+  on_available_train_request: => error 'todo'
+
+  on_schedule_train_request: => error 'todo'
+
+  is_available_here: (resource) =>
+    for produced in *@produces!
+      if resource != produced
+        continue
+      return true
+    false
+
+  produces: => { 'minecraft:dirt' }  -- TODO(kcza): where from?
+
+class Message
+  @protocol: => @.<class>.__name
+
+class Response extends Message
+  @from: (message) =>
+    if message\protocol! == @@protocol!
+      message, true
+    else
+      nil, false
+
+class ResourceSupplierRequest extends Message
+  new: (@resource) =>
+
+class ResourceSupplierResponse extends Response
+  new: (@resource) =>
+
+class ResourceDeliveryRequest extends Message
+  new: (@resource) =>
+
+class ResourceDeliveryResponse extends Response
+  new: (@resource, @train_id) =>
+
+class AvailableTrainRequest extends Message
+  new: (@resource) =>
+
+class AvailableTrainResponse extends Response
+  new: (@resource, @train_id) =>
+
+class TrainScheduleRequest extends Message
+  new: (@resource, @train_id) =>
+
+class TrainScheduleResponse extends Response
+  new: (@resource, @train_id) =>
+
+run_factory = (args) ->
+  while true
+    sleep 1

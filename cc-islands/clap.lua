@@ -519,9 +519,6 @@ do
 				end
 				arg_names[name] = true
 			end
-			if #self._params > 1 then
-				error(arg_names)
-			end
 			local _list_1 = self._subcommands
 			for _index_0 = 1, #_list_1 do
 				local subcommand = _list_1[_index_0]

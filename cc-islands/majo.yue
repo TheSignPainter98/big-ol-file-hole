@@ -1,6 +1,8 @@
 local *
 
 import ArgParser, Flag, Param, Subcommand from require 'clap'
+import 'majo.config'
+import 'majo.node'
 
 verbose = false
 
@@ -8,21 +10,16 @@ main = (args) ->
   arg_parser = with ArgParser 'majo'
     \version '0.1'
     \description 'a cargo auto-router'
-    \add with Subcommand 'start'
-      \description 'start a majo node'
-      \add with Param 'type'
-        \options { 'commander', 'factory' }
-    \add with Subcommand 'node'
-      \description 'station node'
-      \add Param 'a'
+  node.register_args arg_parser
+  config.register_args arg_parser
+
   args, ok = arg_parser\parse args
   if not ok
     return
 
-  if args.start?
-    start args.start
-
-start = (args) ->
-  print 'fdhsjak'
+  if node.is_active args
+    node.run args
+  else if config.is_active args
+    config.run args
 
 main {...}

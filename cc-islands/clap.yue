@@ -264,8 +264,6 @@ export class Subcommand
       if arg_names[name]
         return "duplicate parameter name: #{name}"
       arg_names[name] = true
-    if #@_params > 1
-      error arg_names
 
     for subcommand in *@_subcommands
       name = subcommand._name

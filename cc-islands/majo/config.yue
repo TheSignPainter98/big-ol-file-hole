@@ -1,0 +1,54 @@
+local *
+
+import Param, Subcommand from require 'clap'
+
+export INPUT_STARVATION_THRESHOLD_KEY = 'input-starvation-threshold'
+export OUTPUT_READY_THRESHOLD_KEY =  'output-ready-threshold'
+
+export is_active = (args) -> args.get? or args.set?
+export register_args = (parser) -> with parser
+  config_keys =
+    * INPUT_STARVATION_THRESHOLD_KEY
+    * OUTPUT_READY_THRESHOLD_KEY
+  \add with Subcommand 'get'
+    \description 'get config value'
+    \add with Param 'option'
+      \options config_keys
+      \description 'config value to print'
+  \add with Subcommand 'set'
+    \description 'set config value'
+    \add with Param 'option'
+      \options config_keys
+      \description 'config key to set'
+    \add with Param 'value'
+      \description 'new config value'
+
+export run = (args) ->
+  if args.set?
+    run_set args.option, args.value
+  else if args.get?
+    run_get args.option
+
+run_get = (option) ->
+  if not settings?
+    error 'settings unavailable'
+
+  settings.load!
+  print settings.get option
+
+run_set = (option, value) ->
+  if not settings?
+    error 'settings unavailable'
+
+  settings.load!
+  settings.set option, value
+  settings.save!
+
+export input_starvation_threshold = -> get INPUT_STARVATION_THRESHOLD_KEY
+export output_ready_threshold = -> get OUTPUT_READY_THRESHOLD_KEY
+get = (option) ->
+  if not settings?
+    error 'settings unavailable'
+
+  settings.load!
+  settings.get option
