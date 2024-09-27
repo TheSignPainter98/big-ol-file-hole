@@ -1,0 +1,118 @@
+local *
+
+import Param, Subcommand from require 'clap'
+import Berth from require 'majo.berth'
+import ResourceSupplierRequest, ResourceSupplierResponse, ResourceDeliveryRequest, ResourceDeliveryResponse from require 'majo.messages'
+import Stockpile from require 'majo.stockpile'
+import Uplink, TIMEOUT from require 'majo.uplink'
+import 'majo.config'
+
+IGNORE = <tostring>: => '<ignore>'
+
+export run = (_args) ->
+  with Producer!
+    \listen!
+
+class Producer
+  new: =>
+    @uplink = Uplink!
+    @berth = Berth::find_sole!
+    @state = {}
+    @stockpile = Stockpile::find_sole!
+    @output_ready_threshold = config.output_ready_threshold!
+    @resource = config.resource!
+
+  listen: =>
+    backoff = false
+    while true
+      if backed_off
+        sleep 1
+      else
+        backoff = true
+
+      err = @listen_for_supplier_request!
+      if err? and err != IGNORE
+        print err
+
+      err = @listen_for_delivery_request!
+      if err? and err != IGNORE
+        print err
+
+      err = @listen_for_train_request!
+      if err? and err != IGNORE
+        print err
+
+  listen_for_supplier_request: =>
+    message, err = @uplink\receive_from_any ResourceSupplierRequest,
+      timeout: 5
+    if err?
+      print err
+      return IGNORE
+    {from_id: requester_id, :data } = message
+
+    if not @is_available_here data.resource
+      return IGNORE
+
+    resp = ResourceSupplierResponse resource
+    err = @uplink\send requester_id, resp
+    if err?
+      print err
+      return IGNORE
+
+  listen_for_delivery_request: =>
+    message, err = @uplink\receive_from_any ResourceDeliveryRequest
+    if err?
+      if err == TIMEOUT
+        return IGNORE
+      return err
+    { from_id: requester_id, :data } = message
+    requester_station_name = data.to_station_name
+    if not @is_available_here data.resource
+      return IGNORE
+
+    @uplink\broadcast AvailableTrainRequest!
+
+    message, err = @uplink\receive_from_any AvailableTrainResponse
+    if err?
+      return err
+    { from_id: train_provider_id, :data } = message
+    { :train_id } = data
+
+    err = @uplink\send train_provider_id, TrainScheduleRequest train_id, @berth\name!, requester_station_name -- TODO(kcza): get the station names!
+    if err?
+      return err
+
+    -- TODO(kcza): get the train schedule response
+    -- TODO(kcza): send data with the resource delivery response!
+
+    nil
+
+  listen_for_train_request: => error 'todo'
+
+      -- requester_id, message = rednet.receive ResourceSupplierRequest::protocol!
+      -- if not requester_id?
+      --   continue
+      -- resource_supplier_request, ok = ResourceSupplierRequest::from message
+      -- if not ok
+      --   return nil, "unexpected message #{message}, expected #{ResourceSupplierRequest::protocol!}"
+
+      -- ok = rednet.send requester_id, ResourceSupplierResponse resource
+      -- if not ok
+      --   return nil, "failed to send #{ResourceSupplierResponse::protocol!}"
+
+
+      -- sleep 1
+      -- required_resources = @required_resources!
+      -- if #required_resources > 0
+      --   for resource in *required_resources
+      --     train_id, err = @negotiate_delivery_of resource
+      --     if err?
+      --       print err
+      --       continue
+      --     print "train #{train_id} en-route with #{resource}"
+
+  on_available_train_request: => error 'todo'
+
+  on_schedule_train_request: => error 'todo'
+
+  is_available_here: (resource) => @resource == resource

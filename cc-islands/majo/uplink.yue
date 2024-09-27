@@ -1,0 +1,47 @@
+local *
+
+TIMEOUT = <tostring>: => "<timeout>"
+
+export class Uplink
+  new: =>
+    peripheral.find 'modem', rednet.open -- Recommended hack.
+    if not rednet.isOpen!
+      error 'cannot find modem'
+
+  broadcast: (message) =>
+    print "broadcasting a #{message\protocol!}"
+    rednet.broadcast message, message\protocol!
+
+  send_to: (to_id, message) =>
+    print "sending a #{message\protocol!} to PC##{to_id}"
+    ok = rednet.send supplier_id, message
+    if not ok
+      return "failed to send #{message\protocol!}"
+    nil
+
+  receive_from_any: (message_type, opts={}) =>
+    print "awaiting a #{message_type::protocol!} from anyone"
+    @_receive_from nil, message_type, opts
+
+  receive_from: (from_id, message_type, opts={}) =>
+    print "awaiting a #{message_type::protocol!} from PC##{from_id}"
+    @_receive_from from_id, message_type, opts
+
+  _receive_from: (from_id, message_type, opts={}) =>
+    {:timeout=5} = opts
+
+    local id, message
+    while true
+      id, message = rednet.receive message_type::protocol!, timeout
+      if not id?
+        return nil, TIMEOUT
+      if from_id? and id == from_id
+        break
+
+    data, ok = message_type::from message
+    if not ok
+      return nil, "unexpected message #{message}, expected #{message_type::protocol!}"
+    ret =
+      :from_id
+      :data
+    ret, nil

@@ -1,5 +1,5 @@
 local _module_0 = { }
-local INPUT_STARVATION_THRESHOLD_KEY, OUTPUT_READY_THRESHOLD_KEY, is_active, register_args, run, run_get, run_set, input_starvation_threshold, output_ready_threshold, get
+local INPUT_STARVATION_THRESHOLD_KEY, OUTPUT_READY_THRESHOLD_KEY, RESOURCE_KEY, is_active, register_args, run, run_get, run_set, input_starvation_threshold, output_ready_threshold, resource, NOT_SET, get, make_config_key
 local Param, Subcommand
 do
 	local _obj_0 = require('clap')
@@ -9,6 +9,8 @@ INPUT_STARVATION_THRESHOLD_KEY = 'input-starvation-threshold'
 _module_0["INPUT_STARVATION_THRESHOLD_KEY"] = INPUT_STARVATION_THRESHOLD_KEY
 OUTPUT_READY_THRESHOLD_KEY = 'output-ready-threshold'
 _module_0["OUTPUT_READY_THRESHOLD_KEY"] = OUTPUT_READY_THRESHOLD_KEY
+RESOURCE_KEY = 'resource'
+_module_0["RESOURCE_KEY"] = RESOURCE_KEY
 is_active = function(args)
 	return (args.get ~= nil) or (args.set ~= nil)
 end
@@ -16,7 +18,8 @@ _module_0["is_active"] = is_active
 register_args = function(parser)
 	local config_keys = {
 		INPUT_STARVATION_THRESHOLD_KEY,
-		OUTPUT_READY_THRESHOLD_KEY
+		OUTPUT_READY_THRESHOLD_KEY,
+		RESOURCE_KEY
 	}
 	parser:add((function()
 		local _with_0 = Subcommand('get')
@@ -50,10 +53,12 @@ end
 _module_0["register_args"] = register_args
 run = function(args)
 	if (args.set ~= nil) then
-		return run_set(args.option, args.value)
+		return run_set(args.set.option, args.set.value)
 	else
 		if (args.get ~= nil) then
-			return run_get(args.option)
+			return run_get(args.get.option)
+		else
+			return error("internal error: could not discern config command")
 		end
 	end
 end
@@ -63,29 +68,50 @@ run_get = function(option)
 		error('settings unavailable')
 	end
 	settings.load()
-	return print(settings.get(option))
+	print(get(option))
+	return nil
 end
 run_set = function(option, value)
 	if not (settings ~= nil) then
 		error('settings unavailable')
 	end
 	settings.load()
-	settings.set(option, value)
-	return settings.save()
+	settings.set((make_config_key(option)), value)
+	settings.save()
+	return nil
 end
 input_starvation_threshold = function()
-	return get(INPUT_STARVATION_THRESHOLD_KEY)
+	return get(INPUT_STARVATION_THRESHOLD_KEY, 0.3)
 end
 _module_0["input_starvation_threshold"] = input_starvation_threshold
 output_ready_threshold = function()
-	return get(OUTPUT_READY_THRESHOLD_KEY)
+	return get(OUTPUT_READY_THRESHOLD_KEY, 0.6)
 end
 _module_0["output_ready_threshold"] = output_ready_threshold
-get = function(option)
+resource = function()
+	return get(RESOURCE_KEY)
+end
+_module_0["resource"] = resource
+NOT_SET = setmetatable({ }, {
+	__tostring = function(self)
+		return "<not-set>"
+	end
+})
+get = function(option, default)
+	if default == nil then
+		default = NOT_SET
+	end
 	if not (settings ~= nil) then
 		error('settings unavailable')
 	end
 	settings.load()
-	return settings.get(option)
+	local ret = settings.get((make_config_key(option)), default)
+	if ret == NOT_SET then
+		error("missing setting, run:\n`majo set " .. tostring(option) .. " <value>'")
+	end
+	return ret
+end
+make_config_key = function(option_name)
+	return "majo." .. tostring(option_name)
 end
 return _module_0

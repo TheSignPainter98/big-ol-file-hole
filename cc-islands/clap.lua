@@ -21,8 +21,8 @@ SELF = setmetatable({ }, {
 do
 	local _class_0
 	local _base_0 = {
-		dest = function(self, _name)
-			self._name = _name
+		dest = function(self, _dest)
+			self._dest = _dest
 			return self
 		end,
 		short = function(self, _short)
@@ -86,6 +86,7 @@ do
 	_class_0 = setmetatable({
 		__init = function(self, _name)
 			self._name = _name
+			self._dest = self._name:gsub('-', '_')
 			self._takes_param = false
 			self._default = false
 			self._value_name = 'value'
@@ -117,6 +118,10 @@ _module_0["Flag"] = Flag
 do
 	local _class_0
 	local _base_0 = {
+		dest = function(self, _dest)
+			self._dest = _dest
+			return self
+		end,
 		arg_name = function(self, _arg_name)
 			self._arg_name = _arg_name
 			return self
@@ -148,6 +153,7 @@ do
 	_class_0 = setmetatable({
 		__init = function(self, _name)
 			self._name = _name
+			self._dest = self._name:gsub('-', '_')
 			self._arg_name = nil
 			self._required = true
 			self._description = nil
@@ -230,12 +236,12 @@ do
 				local _list_0 = self._flags
 				for _index_0 = 1, #_list_0 do
 					local flag = _list_0[_index_0]
-					_with_0[flag._name] = flag._default
+					_with_0[flag._dest] = flag._default
 				end
 				local _list_1 = self._params
 				for _index_0 = 1, #_list_1 do
 					local param = _list_1[_index_0]
-					_with_0[param._name] = param._default
+					_with_0[param._dest] = param._default
 				end
 				ret = _with_0
 			end
@@ -275,7 +281,7 @@ do
 						return nil, "unknown flag " .. tostring(arg)
 					end
 					if not flag._takes_param then
-						ret[flag._name] = true
+						ret[flag._dest] = true
 					else
 						i = i + 1
 						local flag_arg = args[i]
@@ -289,9 +295,9 @@ do
 								if (err ~= nil) then
 									return nil, "cannot parse '" .. tostring(flag_arg) .. "': " .. tostring(err)
 								end
-								ret[flag._name] = transformed
+								ret[flag._dest] = transformed
 							else
-								ret[flag._name] = flag_arg
+								ret[flag._dest] = flag_arg
 							end
 						end
 					end
@@ -306,9 +312,9 @@ do
 									if (err ~= nil) then
 										return nil, "failed to parse " .. tostring(arg) .. ": " .. tostring(err)
 									end
-									ret[param._name] = transformed
+									ret[param._dest] = transformed
 								else
-									ret[param._name] = arg
+									ret[param._dest] = arg
 								end
 							end
 							curr_param = curr_param + 1
@@ -376,7 +382,7 @@ do
 			for _index_0 = 1, #_list_0 do
 				local flag = _list_0[_index_0]
 				do
-					local arg = flag[flag._name]
+					local arg = flag[flag._dest]
 					if not arg and flag._required then
 						return nil, "flag '" .. tostring(flag:_repr()) .. "' required"
 					end
@@ -400,9 +406,15 @@ do
 			for _index_0 = 1, #_list_1 do
 				local param = _list_1[_index_0]
 				do
-					local arg = ret[param._name]
+					local arg = ret[param._dest]
 					if not arg and param._required then
-						return nil, "argument '" .. tostring(param:_repr()) .. "' required"
+						local options_repr
+						if param._options then
+							options_repr = " (accepts: " .. tostring(table.concat(param._options, ', ')) .. ")"
+						else
+							options_repr = ""
+						end
+						return nil, "argument '" .. tostring(param:_repr()) .. "' required" .. tostring(options_repr)
 					end
 					if arg and param._options then
 						local ok = false
@@ -415,7 +427,7 @@ do
 							end
 						end
 						if not ok then
-							return nil, "argument '" .. tostring(param:_repr()) .. "' has incorrect value, got '" .. tostring(arg) .. " but expected one of " .. tostring(table.concat(param._options, ', '))
+							return nil, "argument '" .. tostring(param:_repr()) .. "' has incorrect value, got '" .. tostring(arg) .. "' but expected one of " .. tostring(table.concat(param._options, ', '))
 						end
 					end
 				end
@@ -482,7 +494,6 @@ do
 			if #self._params > 0 and #self._subcommands > 0 then
 				return "cannot have both parameters and subcommands in command " .. tostring(self._name)
 			end
-			local flag_tags
 			do
 				local _with_0 = { }
 				local _list_0 = self._flags
@@ -498,35 +509,34 @@ do
 						_with_0[flag._long] = true
 					end
 				end
-				flag_tags = _with_0
 			end
-			local arg_names
+			local arg_dests
 			do
 				local _tbl_0 = { }
 				local _list_0 = self._flags
 				for _index_0 = 1, #_list_0 do
 					local flag = _list_0[_index_0]
-					_tbl_0[flag._name] = true
+					_tbl_0[flag._dest] = true
 				end
-				arg_names = _tbl_0
+				arg_dests = _tbl_0
 			end
 			local _list_0 = self._params
 			for _index_0 = 1, #_list_0 do
 				local param = _list_0[_index_0]
-				local name = param._name
-				if arg_names[name] then
-					return "duplicate parameter name: " .. tostring(name)
+				local dest = param._dest
+				if arg_dests[dest] then
+					return "duplicate parameter name: " .. tostring(dest)
 				end
-				arg_names[name] = true
+				arg_dests[dest] = true
 			end
 			local _list_1 = self._subcommands
 			for _index_0 = 1, #_list_1 do
 				local subcommand = _list_1[_index_0]
-				local name = subcommand._name
-				if (arg_names[name] ~= nil) then
-					return "duplicate subcommand name: " .. tostring(name)
+				local dest = subcommand._dest
+				if (arg_dests[dest] ~= nil) then
+					return "duplicate subcommand name: " .. tostring(dest)
 				end
-				arg_names[name] = true
+				arg_dests[dest] = true
 				do
 					local err = subcommand:_validate_spec()
 					if err then
@@ -539,6 +549,21 @@ do
 		_usage_message = function(self, parents)
 			if parents == nil then
 				parents = { }
+			end
+			if parents[#parents] == self._name then
+				do
+					local _accum_0 = { }
+					local _len_0 = 1
+					local _max_0 = #parents - 1
+					for _index_0 = 1, _max_0 < 0 and #parents + _max_0 or _max_0 do
+						local p = parents[_index_0]
+						_accum_0[_len_0] = p
+						_len_0 = _len_0 + 1
+					end
+					parents = _accum_0
+				end
+			else
+				parents = parents
 			end
 			local parents_repr
 			if #parents > 0 then
@@ -615,6 +640,12 @@ do
 						return _with_1
 					end)())
 				end
+				local pretty_print
+				do
+					local _obj_0 = require('cc.pretty')
+					pretty_print = _obj_0.pretty_print
+				end
+				pretty_print(parents)
 				_with_0[#_with_0 + 1] = ''
 				_with_0[#_with_0 + 1] = self:_usage_message(parents)
 				if #self._subcommands > 0 then
@@ -675,15 +706,81 @@ do
 					for _index_0 = 1, #_list_0 do
 						local param = _list_0[_index_0]
 						local repr = param:_repr()
+						local padding = (' '):rep(longest_param_repr_len - #repr)
+						local description
 						do
-							local description = param._description
-							if description then
-								local padding = (' '):rep(longest_param_repr_len - #repr)
-								_with_0[#_with_0 + 1] = " " .. tostring(repr) .. tostring(padding) .. "  " .. tostring(description)
+							local _exp_0 = param._description
+							if _exp_0 ~= nil then
+								description = _exp_0
 							else
-								_with_0[#_with_0 + 1] = " " .. tostring(repr)
+								description = ""
 							end
 						end
+						local default_repr
+						do
+							local default = param._default
+							if default then
+								default_repr = " (default: " .. tostring(default) .. ")"
+							else
+								default_repr = ""
+							end
+						end
+						local options_repr
+						do
+							local options = param._options
+							if options then
+								options_repr = " (one of: " .. tostring(table.concat(options, ', ')) .. ")"
+							else
+								options_repr = ""
+							end
+						end
+						local rhs_width = ((function()
+							local _exp_0
+							do
+								local _obj_0 = term
+								if _obj_0 ~= nil then
+									_exp_0 = _obj_0.getSize()
+								end
+							end
+							if _exp_0 ~= nil then
+								return _exp_0
+							else
+								return 80
+							end
+						end)()) - (longest_param_repr_len + 3)
+						local rhs_words = (tostring(description) .. tostring(default_repr) .. tostring(options_repr)):gmatch('(%S+)')
+						local rhs_lines
+						do
+							local _with_1 = { }
+							local curr_line = { }
+							local curr_line_len = 0
+							for word in rhs_words do
+								if #word > rhs_width then
+									if #curr_line > 0 then
+										_with_1[#_with_1 + 1] = table.concat(curr_line, ' ')
+									end
+									_with_1[#_with_1 + 1] = word
+									curr_line = { }
+									goto _continue_0
+								end
+								if curr_line_len + 1 + #word > rhs_width then
+									_with_1[#_with_1 + 1] = table.concat(curr_line, ' ')
+									curr_line = {
+										word
+									}
+									curr_line_len = #word
+									goto _continue_0
+								end
+								curr_line[#curr_line + 1] = word
+								curr_line_len = curr_line_len + (1 + #word)
+								::_continue_0::
+							end
+							if #curr_line > 0 then
+								_with_1[#_with_1 + 1] = table.concat(curr_line, ' ')
+							end
+							rhs_lines = _with_1
+						end
+						_with_0[#_with_0 + 1] = " " .. tostring(repr) .. tostring(padding) .. "  " .. tostring(table.concat(rhs_lines, '\n' .. (' '):rep(longest_param_repr_len + 3)))
 					end
 				end
 				if #self._flags > 0 then
@@ -773,7 +870,7 @@ do
 	_class_0 = setmetatable({
 		__init = function(self, _name)
 			self._name = _name
-			self._dest = self._name
+			self._dest = self._name:gsub('-', '_')
 			self._version = nil
 			self._flags = { }
 			self._params = { }

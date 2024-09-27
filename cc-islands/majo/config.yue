@@ -4,12 +4,14 @@ import Param, Subcommand from require 'clap'
 
 export INPUT_STARVATION_THRESHOLD_KEY = 'input-starvation-threshold'
 export OUTPUT_READY_THRESHOLD_KEY =  'output-ready-threshold'
+export RESOURCE_KEY = 'resource'
 
 export is_active = (args) -> args.get? or args.set?
 export register_args = (parser) -> with parser
   config_keys =
     * INPUT_STARVATION_THRESHOLD_KEY
     * OUTPUT_READY_THRESHOLD_KEY
+    * RESOURCE_KEY
   \add with Subcommand 'get'
     \description 'get config value'
     \add with Param 'option'
@@ -25,30 +27,41 @@ export register_args = (parser) -> with parser
 
 export run = (args) ->
   if args.set?
-    run_set args.option, args.value
+    run_set args.set.option, args.set.value
   else if args.get?
-    run_get args.option
+    run_get args.get.option
+  else
+    error "internal error: could not discern config command"
 
 run_get = (option) ->
   if not settings?
     error 'settings unavailable'
 
   settings.load!
-  print settings.get option
+  print get option
+  nil
 
 run_set = (option, value) ->
   if not settings?
     error 'settings unavailable'
 
   settings.load!
-  settings.set option, value
+  settings.set (make_config_key option), value
   settings.save!
+  nil
 
-export input_starvation_threshold = -> get INPUT_STARVATION_THRESHOLD_KEY
-export output_ready_threshold = -> get OUTPUT_READY_THRESHOLD_KEY
-get = (option) ->
+export input_starvation_threshold = -> get INPUT_STARVATION_THRESHOLD_KEY, 0.3
+export output_ready_threshold = -> get OUTPUT_READY_THRESHOLD_KEY, 0.6
+export resource = -> get RESOURCE_KEY
+NOT_SET = <tostring>: => "<not-set>"
+get = (option, default=NOT_SET) ->
   if not settings?
     error 'settings unavailable'
 
   settings.load!
-  settings.get option
+  ret = settings.get (make_config_key option), default
+  if ret == NOT_SET
+    error "missing setting, run:\n`majo set #{option} <value>'"
+  ret
+
+make_config_key = (option_name) -> "majo.#{option_name}"

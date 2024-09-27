@@ -22,13 +22,30 @@ main = function(args)
 	if not ok then
 		return
 	end
-	if node.is_active(args) then
-		return node.run(args)
-	else
-		if config.is_active(args) then
-			return config.run(args)
+	return xpcall(function()
+		local err
+		if node.is_active(args) then
+			err = node.run(args)
+		else
+			if config.is_active(args) then
+				err = config.run(args)
+			else
+				err = 'internal error: no active command'
+			end
 		end
-	end
+		if (err ~= nil) then
+			return error(err)
+		end
+	end, function(err)
+		return xpcall(function()
+			local colour = term.getTextColor()
+			term.setTextColor(colors.red)
+			print(err)
+			return term.setTextColor(colour)
+		end, function(err2)
+			return print("error: caught another error:\n" .. tostring(err2) .. "\nwhilst handling:\n" .. tostring(err))
+		end)
+	end)
 end
 return main({
 	...

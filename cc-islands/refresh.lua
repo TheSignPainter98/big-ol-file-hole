@@ -1,4 +1,4 @@
-local quiet, verbose, main, get_paths, get_file_content, log, debug
+local quiet, verbose, main, make_sources_url, get_paths, get_file_content, log, debug
 local ArgParser, Flag, Param
 do
 	local _obj_0 = require('clap')
@@ -13,6 +13,22 @@ main = function(args)
 		_with_0:version('1.0')
 		_with_0:description('a downloader of up-to-date files')
 		_with_0:add((function()
+			local _with_1 = Param('user')
+			_with_1:description('whose repo to pull from')
+			return _with_1
+		end)())
+		_with_0:add((function()
+			local _with_1 = Param('repo')
+			_with_1:description('repo name to pull from')
+			return _with_1
+		end)())
+		_with_0:add((function()
+			local _with_1 = Param('folder')
+			_with_1:description('folder to pull from')
+			_with_1:default(nil)
+			return _with_1
+		end)())
+		_with_0:add((function()
 			local _with_1 = Flag('quiet')
 			_with_1:description('output quietly')
 			return _with_1
@@ -23,9 +39,15 @@ main = function(args)
 			return _with_1
 		end)())
 		_with_0:add((function()
-			local _with_1 = Flag('source')
-			_with_1:default('https://raw.githubusercontent.com/TheSignPainter98/big-ol-file-hole/master/cc-islands')
+			local _with_1 = Flag('url-template')
+			_with_1:default('https://raw.githubusercontent.com/{user}/{repo}/{branch}{folder}')
 			_with_1:description('where to get the files from')
+			return _with_1
+		end)())
+		_with_0:add((function()
+			local _with_1 = Flag('branch')
+			_with_1:description('branch in the repo to pull from')
+			_with_1:default('master')
 			return _with_1
 		end)())
 		arg_parser = _with_0
@@ -37,13 +59,33 @@ main = function(args)
 	end
 	quiet = args.quiet
 	verbose = args.verbose
-	debug("downloading files from " .. tostring(args.source))
+	local sources_url = make_sources_url(args)
+	local err
+	ok, err = http.checkUrl(source)
+	if not ok then
+		print("url invalid: " .. tostring(err))
+		return
+	end
+	local resp
+	resp, err = http.get(sources_url)
+	if not (resp ~= nil) then
+		print(err)
+		return
+	end
+	local content
+	do
+		content = resp:readAll()
+		resp:close()
+	end
+	error("downloading from " .. tostring(resp))
+	debug("downloading files from " .. tostring(source))
 	local any_failed = false
 	local _list_0 = get_paths('/')
 	for _index_0 = 1, #_list_0 do
 		local path = _list_0[_index_0]
 		log(tostring(path) .. "...")
-		local file_content, err = get_file_content(args.source, path)
+		local file_content
+		file_content, err = get_file_content(source, path)
 		if (err ~= nil) then
 			log(err)
 			any_failed = true
@@ -61,6 +103,16 @@ main = function(args)
 	if not any_failed then
 		return log('SUCCESS')
 	end
+end
+make_sources_url = function(args)
+	local url_template, user, repo, branch, folder = args.url_template, args.user, args.repo, args.branch, args.folder
+	if folder == nil then
+		folder = ""
+	end
+	if #folder > 0 then
+		folder = "/" .. tostring(folder)
+	end
+	return (url_template:gsub('{user}', user)):gsub('{repo}', repo):gsub('{branch}', branch):gsub('{folder}', folder)
 end
 get_paths = function(path, paths)
 	if paths == nil then

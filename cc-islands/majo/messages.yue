@@ -1,0 +1,39 @@
+local *
+
+class Packet
+  @protocol: =>
+    @.__class.__name
+
+  protocol: => @@protocol!
+
+class Response extends Packet
+  @from: (message) =>
+    if message\protocol! == @@protocol!
+      message, true
+    else
+      nil, false
+
+export class ResourceSupplierRequest extends Packet
+  new: (@resource) =>
+
+export class ResourceSupplierResponse extends Response
+  new: (@resource) =>
+
+export class ResourceDeliveryRequest extends Packet
+  new: (@resource, @to_station_name) =>
+
+export class ResourceDeliveryResponse extends Response
+  new: (@resource, @train_id) =>
+
+export class AvailableTrainRequest extends Packet
+
+export class AvailableTrainResponse extends Response
+  new: (@train_id) =>
+
+export class TrainScheduleRequest extends Packet
+  new: (@train_id, @from_station_name, @to_station_name) =>
+
+export class TrainScheduleResponse extends Response
+  new: (@train_id) =>
+
+export class RefreshRequest extends Packet

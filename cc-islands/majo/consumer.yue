@@ -1,0 +1,74 @@
+local *
+
+import 'majo.config'
+import Berth from require 'majo.berth'
+import ResourceSupplierRequest, ResourceDeliveryRequest, ResourceSupplierResponse, ResourceDeliveryResponse from require 'majo.messages'
+import Stockpile from require 'majo.stockpile'
+import Uplink from require 'majo.uplink'
+
+export run = (_args) ->
+  with Consumer!
+    \listen!
+
+class Consumer
+  new: =>
+    @uplink = Uplink!
+    @berth = Berth::find_sole!
+    @stockpile = Stockpile::find_sole!
+    @input_starvation_threshold = tonumber config.input_starvation_threshold!
+    if @input_starvation_threshold < 0 or 1 < @input_starvation_threshold
+      error 'input starvation threshold must be between 0 and 1'
+    @resource = config.resource!
+    @state = {}
+
+  listen: =>
+    @state.awaiting_train_id = nil
+
+    while true
+      if backed_off
+        sleep 1
+      else
+        backoff = true
+
+      if @berth\train_present!
+        @state.awaiting_train_id = nil
+
+      if not @state.awaiting_train_id?
+        err = @listen_for_low_resource!
+        if err? and err != IGNORE
+          print err
+
+      err = @listen_for_train_request!
+      if err? and err != IGNORE
+        print err
+
+  listen_for_low_resource: =>
+    if @stockpile\level! < @input_starvation_threshold
+      train_id, err = @negotiate_train_of @resource
+      if err?
+        return err
+      @state.awaiting_train_id = train_id
+      return nil
+
+  negotiate_train_of: (resource) =>
+    @uplink\broadcast ResourceSupplierRequest resource
+
+    message, err = @uplink\receive_from_any ResourceSupplierResponse,
+      timeout: 10
+    if err?
+      return nil, "cannot find supplier for #{resource}: #{err}"
+    { from_id: supplier_id, :data } = message
+    if data.resource != resource
+      return nil, IGNORE
+
+    err = @uplink\send supplier_id, ResourceDeliveryRequest resource, @berth\name!
+    if err?
+      return nil, err
+
+    message, err = @uplink\receive_from supplier_id, ResourceDeliveryResponse, timeout: 60
+    if err?
+      return nil, err
+    if data.resource != resource
+      return nil, IGNORE
+    { from_id: supplier_id, :data } = message
+    data.train_id, nil

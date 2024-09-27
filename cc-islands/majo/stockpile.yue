@@ -1,0 +1,25 @@
+local *
+
+export class Stockpile
+  new: (@inventory) =>
+
+  @find_sole: =>
+    inventories = { peripheral.find 'inventory' }
+    if #inventories == 0
+      error = 'could not find inventory'
+    if #inventories > 1
+      print 'too many inventories, taking first'
+    Stockpile inventories[1]
+
+  level: =>
+    total_stored = 0
+    total_capacity = 0
+    size = @inventory.size!
+    for i, slot in pairs @inventory.list!
+      total_stored += slot.count
+      total_capacity += @inventory.getItemLimit i
+
+    if total_capacity == 0
+      return 0
+
+    total_stored / total_capacity

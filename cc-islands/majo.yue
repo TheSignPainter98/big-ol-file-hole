@@ -17,9 +17,22 @@ main = (args) ->
   if not ok
     return
 
-  if node.is_active args
-    node.run args
-  else if config.is_active args
-    config.run args
+  try
+    err = if node.is_active args
+      node.run args
+    else if config.is_active args
+      config.run args
+    else
+      'internal error: no active command'
+    if err?
+      error err -- Unify error handling.
+  catch err
+    try
+      colour = term.getTextColor!
+      term.setTextColor colors.red
+      print err
+      term.setTextColor colour
+    catch err2
+      print "error: caught another error:\n#{err2}\nwhilst handling:\n#{err}"
 
 main {...}

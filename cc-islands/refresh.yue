@@ -9,24 +9,50 @@ main = (args) ->
   arg_parser = with ArgParser 'refresh'
     \version '1.0'
     \description 'a downloader of up-to-date files'
+    \add with Param 'user'
+      \description 'whose repo to pull from'
+    \add with Param 'repo'
+      \description 'repo name to pull from'
+    \add with Param 'folder'
+      \description 'folder to pull from'
+      \default nil
     \add with Flag 'quiet'
       \description 'output quietly'
     \add with Flag 'verbose'
       \description 'output verbosely'
-    \add with Flag 'source'
-      \default 'https://raw.githubusercontent.com/TheSignPainter98/big-ol-file-hole/master/cc-islands'
+    \add with Flag 'url-template'
+      \default 'https://raw.githubusercontent.com/{user}/{repo}/{branch}{folder}'
       \description 'where to get the files from'
+    \add with Flag 'branch'
+      \description 'branch in the repo to pull from'
+      \default 'master'
   args, ok = arg_parser\parse args
   if not ok
     return
+
   quiet = args.quiet
   verbose = args.verbose
+  sources_url = make_sources_url args
+  ok, err = http.checkUrl source
+  if not ok
+    print "url invalid: #{err}"
+    return
+  resp, err = http.get sources_url
+  if not resp?
+    print err
+    return
+  local content
+  with resp
+    content = \readAll!
+    \close!
+  error "downloading from #{resp}"
+  -- TODO(kcza): read the JSON download!
 
-  debug "downloading files from #{args.source}"
+  debug "downloading files from #{source}"
   any_failed = false
   for path in *get_paths '/'
     log "#{path}..."
-    file_content, err = get_file_content args.source, path
+    file_content, err = get_file_content source, path
     if err?
       log err
       any_failed = true
@@ -42,6 +68,15 @@ main = (args) ->
 
   if not any_failed
     log 'SUCCESS'
+
+make_sources_url = (args) ->
+  { :url_template, :user, :repo, :branch, :folder="" } = args
+  if #folder > 0
+    folder = "/#{folder}"
+  (url_template\gsub '{user}', user)
+    \gsub '{repo}', repo
+    \gsub '{branch}', branch
+    \gsub '{folder}', folder
 
 get_paths = (path, paths={} using nil) ->
   if not fs.isDir path

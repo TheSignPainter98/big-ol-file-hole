@@ -1,0 +1,64 @@
+local *
+
+export class Berth
+  new: (@station) =>
+
+  @find_sole: =>
+    stations = { peripheral.find 'Create_Station' }
+    if #stations == 0
+      error 'could not find station'
+    if #stations > 1
+      print 'too many stations attached, taking first'
+    Berth stations[1]
+
+  name: => @station.getStationName!
+
+  train_present: => @station\isTrainPresent!
+
+  schedule: (from_id, to_id, resource) =>
+    schedule =
+      cyclic: false
+      entries:
+        * instruction:
+            id: "create:rename"
+            data: text: ""
+        * instruction:
+            id: "create:destination"
+            data: text: from_id
+          conditions:
+            * { CARGO_INACTIVE_CONDITION, CARGO_INACTIVE_TIMEOUT }
+            * { OVERALL_TIMEOUT }
+        * instruction:
+            id: "create:destination"
+            data: text: to_id
+          conditions:
+            * { CARGO_INACTIVE_CONDITION, CARGO_INACTIVE_TIMEOUT }
+            * { OVERALL_TIMEOUT }
+        * instruction:
+            id: "create:rename"
+            data: text: "available train"
+    try
+      @station\setSchedule schedule
+    catch err
+      return err
+    nil
+
+time_units =
+  TICKS: 0
+  SECONDS: 1
+  MINUTES: 2
+CARGO_INACTIVE_CONDITION =
+  id: "create:idle"
+  data:
+    value: 5
+    time_unit: time_units.SECONDS
+CARGO_INACTIVE_TIMEOUT =
+  id: "create:delay"
+  data:
+    value: 15
+    time_unit: time_units.SECONDS
+OVERALL_TIMEOUT =
+  id: "create:delay"
+  data:
+    value: 30
+    time_unit: time_units.SECONDS

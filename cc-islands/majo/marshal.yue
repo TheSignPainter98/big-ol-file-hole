@@ -1,0 +1,8 @@
+local *
+
+import Uplink from require 'majo.uplink'
+import RefreshRequest from require 'majo.messages'
+
+export run = (_args) ->
+  uplink = Uplink!
+  uplink\broadcast RefreshRequest!

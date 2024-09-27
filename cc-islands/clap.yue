@@ -10,6 +10,7 @@ SELF = <tostring>: => '<self>'
 
 export class Flag
   new: (@_name) =>
+    @_dest = @_name\gsub '-', '_'
     @_takes_param = false
     @_default = false
     @_value_name = 'value'
@@ -23,7 +24,7 @@ export class Flag
     @_options = nil
     @_transform = nil
 
-  dest: (@_name) => @
+  dest: (@_dest) => @
   short: (@_short) => @
   long: (@_long) => @
   required: =>
@@ -56,12 +57,14 @@ export class Flag
 
 export class Param
   new: (@_name) =>
+    @_dest = @_name\gsub '-', '_'
     @_arg_name = nil
     @_required = true
     @_description = nil
     @_options = nil
     @_transform = nil
 
+  dest: (@_dest) => @
   arg_name: (@_arg_name) => @
   default: (@_default) =>
     @_required = false
@@ -74,7 +77,7 @@ export class Param
 
 export class Subcommand
   new: (@_name) =>
-    @_dest = @_name
+    @_dest = @_name\gsub '-', '_'
     @_version = nil
     @_flags = {}
     @_params = {}
@@ -105,9 +108,9 @@ export class Subcommand
   _parse: (args, parents={}) =>
     ret = with {}
       for flag in *@_flags
-        [flag._name] = flag._default
+        [flag._dest] = flag._default
       for param in *@_params
-        [param._name] = param._default
+        [param._dest] = param._default
 
     flag_map = with {}
       for flag in *@_flags
@@ -127,7 +130,7 @@ export class Subcommand
         flag = flag_map[arg]
         if not flag?
           return nil, "unknown flag #{arg}"
-        ret[flag._name] = if not flag._takes_param
+        ret[flag._dest] = if not flag._takes_param
           true
         else
           i += 1
@@ -143,7 +146,7 @@ export class Subcommand
           else
             flag_arg
       else if param = @_params[curr_param]
-        ret[param._name] = if transform = param._transform
+        ret[param._dest] = if transform = param._transform
           transformed, err = transform arg
           if err?
             return nil, "failed to parse #{arg}: #{err}"
@@ -185,7 +188,7 @@ export class Subcommand
 
     for flag in *@_flags
       with flag
-        arg = flag[._name]
+        arg = flag[._dest]
         if not arg and ._required
           return nil, "flag '#{\_repr!}' required"
         if arg and ._options
@@ -198,9 +201,13 @@ export class Subcommand
             return nil, "flag '#{\_repr!}' has incorrect value, got '#{arg}' but expected one of #{table.concat ._options, ', '}"
     for param in *@_params
       with param
-        arg = ret[._name]
+        arg = ret[._dest]
         if not arg and ._required
-          return nil, "argument '#{\_repr!}' required"
+          options_repr = if ._options
+            " (accepts: #{table.concat ._options, ', '})"
+          else
+            ""
+          return nil, "argument '#{\_repr!}' required#{options_repr}"
         if arg and ._options
           ok = false
           for option in *._options
@@ -208,7 +215,7 @@ export class Subcommand
               ok = true
               break
           if not ok
-            return nil, "argument '#{\_repr!}' has incorrect value, got '#{arg} but expected one of #{table.concat ._options, ', '}"
+            return nil, "argument '#{\_repr!}' has incorrect value, got '#{arg}' but expected one of #{table.concat ._options, ', '}"
     if #@_subcommands > 0
       command_specified = false
       for command in *@_subcommands
@@ -249,7 +256,7 @@ export class Subcommand
     if #@_params > 0 and #@_subcommands > 0
       return "cannot have both parameters and subcommands in command #{@_name}"
 
-    flag_tags = with {}
+    with {}
       for flag in *@_flags
         if [flag._short] or [flag._long]
           return "duplicate flag: #{flag\_repr!}"
@@ -258,18 +265,18 @@ export class Subcommand
         if flag._long
           [flag._long] = true
 
-    arg_names = { flag._name, true for flag in *@_flags }
+    arg_dests = { flag._dest, true for flag in *@_flags }
     for param in *@_params
-      name = param._name
-      if arg_names[name]
-        return "duplicate parameter name: #{name}"
-      arg_names[name] = true
+      dest = param._dest
+      if arg_dests[dest]
+        return "duplicate parameter name: #{dest}"
+      arg_dests[dest] = true
 
     for subcommand in *@_subcommands
-      name = subcommand._name
-      if arg_names[name]?
-        return "duplicate subcommand name: #{name}"
-      arg_names[name] = true
+      dest = subcommand._dest
+      if arg_dests[dest]?
+        return "duplicate subcommand name: #{dest}"
+      arg_dests[dest] = true
 
       if err = subcommand\_validate_spec!
         return err
@@ -277,6 +284,11 @@ export class Subcommand
     nil
 
   _usage_message: (parents={}) =>
+    parents = if parents[#parents] == @_name
+      -- This is a hack :C
+      [ p for p in *parents[,#parents-1]]
+    else
+      parents
     parents_repr = if #parents > 0
       (table.concat parents, ' ') .. ' '
     else
@@ -321,6 +333,8 @@ export class Subcommand
           if #parents > 0
             [] = ' '
           [] = "#{@_name} - #{@_description}"
+      import pretty_print from require 'cc.pretty'
+      pretty_print parents
 
       [] = ''
       [] = @_usage_message parents
@@ -346,11 +360,41 @@ export class Subcommand
         longest_param_repr_len = math.max unpack [ #p\_repr! for p in *@_params ]
         for param in *@_params
           repr = param\_repr!
-          if description = param._description
-            padding = ' '\rep longest_param_repr_len - #repr
-            [] = " #{repr}#{padding}  #{description}"
+          padding = ' '\rep longest_param_repr_len - #repr
+          description = param._description ?? ""
+          default_repr = if default = param._default
+            " (default: #{default})"
           else
-            [] = " #{repr}"
+            ""
+          options_repr = if options = param._options
+            " (one of: #{table.concat options, ', '})"
+          else
+            ""
+          rhs_width = (term?.getSize! ?? 80) - (longest_param_repr_len + 3)
+          rhs_words = "#{description}#{default_repr}#{options_repr}"\gmatch '(%S+)'
+          rhs_lines = with {}
+            curr_line = {}
+            curr_line_len = 0
+            for word in rhs_words
+              if #word > rhs_width
+                if #curr_line > 0
+                  [] = table.concat curr_line, ' '
+                [] = word
+                curr_line = {}
+                continue
+
+              if curr_line_len + 1 + #word > rhs_width
+                [] = table.concat curr_line, ' '
+                curr_line = {word}
+                curr_line_len = #word
+                continue
+
+              curr_line[] = word
+              curr_line_len += 1 + #word
+            if #curr_line > 0
+              [] = table.concat curr_line, ' '
+
+          [] = " #{repr}#{padding}  #{table.concat rhs_lines, '\n' .. ' '\rep longest_param_repr_len + 3}"
 
       if #@_flags > 0
         [] = ''
